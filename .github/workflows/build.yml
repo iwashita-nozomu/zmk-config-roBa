@@ -1,5 +1,38 @@
-on: [push, pull_request, workflow_dispatch]
+name: Build firmware
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
-    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@v0.3-branch
+    runs-on: ubuntu-22.04
+    env:
+      SOURCE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out exact source revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ env.SOURCE_REVISION }}
+          persist-credentials: false
+
+      - name: Build firmware twice in the pinned environment
+        run: ./scripts/zmk-env repeat
+
+      - name: Draw keymap in the same pinned environment
+        run: ./scripts/zmk-env draw
+
+      - name: Upload firmware, keymap, and provenance
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: zmk-build-evidence
+          if-no-files-found: error
+          path: |
+            artifacts/
+            keymap-drawer/roBa.svg
+            keymap-drawer/roBa.yaml

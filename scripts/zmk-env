@@ -1,0 +1,45 @@
+#!/bin/sh
+set -eu
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repo_root=$(CDPATH= cd -- "${script_dir}/.." && pwd)
+
+command=${1:-}
+case "${command}" in
+  verify|build|draw|repeat) ;;
+  *)
+    echo "usage: $0 {verify|build|draw|repeat}" >&2
+    exit 2
+    ;;
+esac
+shift
+
+image=${ZMK_TOOLCHAIN_IMAGE:-zmk-config-roba:issue-164}
+docker build --pull --tag "${image}" "${repo_root}"
+
+image_id=$(docker image inspect --format '{{.Id}}' "${image}")
+source_revision=${SOURCE_REVISION:-}
+if [ -z "${source_revision}" ]; then
+  source_revision=$(git -C "${repo_root}" rev-parse HEAD)
+fi
+source_date_epoch=${SOURCE_DATE_EPOCH:-}
+if [ -z "${source_date_epoch}" ]; then
+  source_date_epoch=$(git -C "${repo_root}" show -s --format=%ct HEAD)
+fi
+case "${source_date_epoch}" in
+  ''|*[!0-9]*)
+    echo "SOURCE_DATE_EPOCH must be an integer" >&2
+    exit 2
+    ;;
+esac
+
+exec docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  --env HOME=/tmp/zmk-home \
+  --env "SOURCE_DATE_EPOCH=${source_date_epoch}" \
+  --env "SOURCE_REVISION=${source_revision}" \
+  --env "TOOLCHAIN_IMAGE_ID=${image_id}" \
+  --volume "${repo_root}:/workspace" \
+  --workdir /workspace \
+  "${image}" \
+  "${command}" "$@"
