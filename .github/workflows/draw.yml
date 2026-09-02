@@ -1,24 +1,41 @@
-name: "Draw Keymap"
+name: Draw keymap
 
 on:
   workflow_dispatch:
-  # push時に自動で実行する場合は、以下のコメントアウトを外す
-  # push:
-  #   paths:
-  #     - "config/roBa.keymap"
-  #     - "keymap_drawer.config.yaml"
-  #     - "config/roBa.dtsi"
+
+permissions:
+  contents: write
 
 jobs:
   draw:
-    uses: caksoylar/keymap-drawer/.github/workflows/draw-zmk.yml@f9cf9d3677368a7fb1dc505c51b8156fafa66fe2
-    permissions:
-      contents: write
-    with:
-      commit_message: "[Draw] ${{ github.event.head_commit.message || 'Update keymap drawing' }}"
-      amend_commit: false
-      keymap_patterns: "config/*.keymap"
-      json_path: "config"
-      config_path: "keymap_drawer.config.yaml" # config file, ignored if not exists
-      output_folder: "keymap-drawer"
-      destination: "both"
+    runs-on: ubuntu-22.04
+    env:
+      SOURCE_REVISION: ${{ github.sha }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Draw keymap in the pinned environment
+        run: ./scripts/zmk-env draw
+
+      - name: Upload drawing and provenance
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: keymap-drawing
+          if-no-files-found: error
+          path: |
+            keymap-drawer/roBa.svg
+            keymap-drawer/roBa.yaml
+            artifacts/keymap-provenance.json
+            artifacts/keymap-west-manifest.lock.yml
+
+      - name: Commit updated drawing
+        run: |
+          if git diff --quiet -- keymap-drawer/roBa.svg keymap-drawer/roBa.yaml; then
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add keymap-drawer/roBa.svg keymap-drawer/roBa.yaml
+          git commit -m "[Draw] Update keymap drawing"
+          git push

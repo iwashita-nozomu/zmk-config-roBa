@@ -1,0 +1,34 @@
+#!/bin/sh
+set -eu
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repo_root=$(CDPATH= cd -- "${script_dir}/.." && pwd)
+
+command=${1:-}
+case "${command}" in
+  verify|build|draw|repeat) ;;
+  *)
+    echo "usage: $0 {verify|build|draw|repeat}" >&2
+    exit 2
+    ;;
+esac
+shift
+
+image=${ZMK_TOOLCHAIN_IMAGE:-zmk-config-roba:issue-164}
+docker build --pull --tag "${image}" "${repo_root}"
+
+image_id=$(docker image inspect --format '{{.Id}}' "${image}")
+source_revision=${SOURCE_REVISION:-}
+if [ -z "${source_revision}" ]; then
+  source_revision=$(git -C "${repo_root}" rev-parse HEAD)
+fi
+
+exec docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  --env HOME=/tmp/zmk-home \
+  --env "SOURCE_REVISION=${source_revision}" \
+  --env "TOOLCHAIN_IMAGE_ID=${image_id}" \
+  --volume "${repo_root}:/workspace" \
+  --workdir /workspace \
+  "${image}" \
+  "${command}" "$@"
