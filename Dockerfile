@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.7
 FROM docker.io/zmkfirmware/zmk-build-arm@sha256:840526f03c19c286b614d5cb97b11242ae19e468fc2ef2f095f6cf0465fa1c5b
 
 COPY toolchain/keymap-drawer-requirements.txt /tmp/keymap-drawer-requirements.txt

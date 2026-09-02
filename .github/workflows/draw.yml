@@ -12,8 +12,10 @@ jobs:
     env:
       SOURCE_REVISION: ${{ github.sha }}
     steps:
-      - name: Check out source
+      - name: Check out exact source revision
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ env.SOURCE_REVISION }}
 
       - name: Draw keymap in the pinned environment
         run: ./scripts/zmk-env draw

@@ -176,20 +176,32 @@ def verify(lock: dict[str, str]) -> None:
             raise Error(f"CI does not run {command}")
     if "./scripts/zmk-env draw" not in draw_workflow:
         raise Error("manual and CI drawing commands differ")
+    if "ref: ${{ env.SOURCE_REVISION }}" not in build_workflow or "ref: ${{ env.SOURCE_REVISION }}" not in draw_workflow:
+        raise Error("workflows do not check out the declared source revision")
     build_matrix()
 
-    if not HEX40.fullmatch(os.environ.get("SOURCE_REVISION", "")):
+    source_revision = os.environ.get("SOURCE_REVISION", "")
+    if not HEX40.fullmatch(source_revision):
         raise Error("SOURCE_REVISION must be the checked-out commit")
+    actual_source_revision = run(
+        ["git", "-c", f"safe.directory={REPO}", "-C", str(REPO), "rev-parse", "HEAD"],
+        REPO,
+        capture=True,
+    ).strip()
+    if actual_source_revision != source_revision:
+        raise Error(f"checked-out source is {actual_source_revision}, expected {source_revision}")
     if not IMAGE_ID.fullmatch(os.environ.get("TOOLCHAIN_IMAGE_ID", "")):
         raise Error("TOOLCHAIN_IMAGE_ID must be the built image ID")
+    if not re.fullmatch(r"[0-9]+", os.environ.get("SOURCE_DATE_EPOCH", "")):
+        raise Error("SOURCE_DATE_EPOCH must be the source commit timestamp")
     if sys.version_info[:2] != (3, 12):
         raise Error(f"expected Python 3.12, got {sys.version.split()[0]}")
     if importlib.metadata.version("keymap-drawer") != lock["KEYMAP_DRAWER_VERSION"]:
         raise Error("keymap-drawer runtime and lock differ")
     if os.environ.get("ZEPHYR_VERSION") != lock["ZEPHYR_VERSION"]:
         raise Error("base image Zephyr version and lock differ")
-    if os.environ.get("ZEPHYR_SDK_VERSION") != lock["ZEPHYR_SDK_VERSION"]:
-        raise Error("base image Zephyr SDK version and lock differ")
+    if not Path(f"/opt/zephyr-sdk-{lock['ZEPHYR_SDK_VERSION']}").is_dir():
+        raise Error("the locked Zephyr SDK directory is absent from the base image")
 
     print("Issue #164 environment checks passed.")
 
@@ -254,7 +266,12 @@ def receipt(lock: dict[str, str], kind: str, frozen: str, artifacts: list[tuple[
     environment = {
         **lock,
         "TOOLCHAIN_IMAGE_ID": os.environ["TOOLCHAIN_IMAGE_ID"],
+        "SOURCE_DATE_EPOCH": os.environ["SOURCE_DATE_EPOCH"],
         "PYTHON_VERSION": sys.version.split()[0],
+        "WEST_VERSION": run(["west", "--version"], REPO, capture=True).strip(),
+        "CMAKE_VERSION": run(["cmake", "--version"], REPO, capture=True).splitlines()[0],
+        "NINJA_VERSION": run(["ninja", "--version"], REPO, capture=True).strip(),
+        "ZEPHYR_SDK_ROOT": f"/opt/zephyr-sdk-{lock['ZEPHYR_SDK_VERSION']}",
     }
     identity = {
         "schema": 1,
