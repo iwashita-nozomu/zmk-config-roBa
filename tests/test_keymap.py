@@ -54,13 +54,33 @@ class KeymapTests(unittest.TestCase):
     def test_base_entrypoints(self):
         expected = {
             7: "&kp I", 16: "&lt 5 MINUS", 17: "&kp H",
-            37: "&lt_mouse_exit 6 INT_HENKAN", 38: "&lt 2 SPACE",
-            39: "&lt_mouse_exit 3 INT_MUHENKAN", 40: "&kp ESCAPE",
+            37: "&lt_mouse_exit 6 LC(SPACE)", 38: "&lt 2 SPACE",
+            39: "&mo 3", 40: "&kp ESCAPE",
             41: "&lt 4 ENTER", 42: "&kp BACKSPACE",
         }
         for position, binding in expected.items():
             with self.subTest(position=position):
                 self.assertEqual(LAYERS["BASE"][position], binding)
+
+    def test_single_ime_toggle_replaces_both_legacy_ime_keys(self):
+        self.assertNotRegex(EXPANDED, r"INT_(?:HENKAN|MUHENKAN)|LANG(?:UAGE_)?[125]\b")
+        ime_positions = [
+            (name, pos) for name, keys in LAYERS.items()
+            for pos, binding in enumerate(keys) if "LC(SPACE)" in binding
+        ]
+        self.assertEqual(ime_positions, [("BASE", 37)])
+        self.assertEqual(LAYERS["BASE"][37], "&lt_mouse_exit 6 LC(SPACE)")
+        self.assertEqual(LAYERS["BASE"][38], "&lt 2 SPACE")
+        self.assertEqual(LAYERS["BASE"][39], "&mo 3")
+        # NAV sends no tap key, and does not use hold-tap to decide entry.
+        self.assertNotIn("&lt_mouse_exit 3", EXPANDED)
+
+    def test_thumb_ime_and_nav_survive_all_layer_combinations(self):
+        for flags in itertools.product((False, True), repeat=6):
+            active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
+            with self.subTest(active=sorted(active)):
+                self.assertEqual(resolve(active, 37), "&lt_mouse_exit 6 LC(SPACE)")
+                self.assertEqual(resolve(active, 39), "&mo 3")
 
     def test_modifiers_are_preserved(self):
         self.assertEqual(LAYERS["BASE"][34:37], ["&kp LCTRL", "&kp LEFT_WIN", "&kp LEFT_ALT"])
@@ -150,14 +170,13 @@ class KeymapTests(unittest.TestCase):
             r'bindings = <&mo>, <&exit_mouse_key>;'
         ))
         self.assertRegex(EXPANDED, (
-            r"(?s)muhennkann\s*\{\s*bindings = <&exit_mouse_key INT_MUHENKAN>;"
+            r"(?s)exit_mouse\s*\{\s*bindings = <&mouse_off 1>;"
         ))
-        # Only the former IME taps / combo gain mouse exit, not clicks or all keys.
-        for position, layer, code in ((37, 6, "INT_HENKAN"), (39, 3, "INT_MUHENKAN")):
-            self.assertEqual(
-                resolve({"BASE", "MOUSE"}, position),
-                f"&lt_mouse_exit {layer} {code}",
-            )
+        # One IME tap exits MOUSE; A+S exits without sending an IME key.
+        self.assertEqual(
+            resolve({"BASE", "MOUSE"}, 37), "&lt_mouse_exit 6 LC(SPACE)"
+        )
+        self.assertEqual(resolve({"BASE", "MOUSE"}, 39), "&mo 3")
         self.assertEqual(resolve({"BASE", "MOUSE"}, 40), "&kp ESCAPE")
 
     def test_mouse_exit_keeps_manual_layers_in_lookup_model(self):
@@ -197,11 +216,11 @@ class KeymapTests(unittest.TestCase):
 
     def test_combos_do_not_capture_manual_layer_keys(self):
         combos = re.findall(
-            r"\b(tab|shift_tab|muhennkann|double_quotation|eq)\s*\{(.*?)\};",
+            r"\b(tab|shift_tab|exit_mouse|double_quotation|eq)\s*\{(.*?)\};",
             EXPANDED, re.DOTALL,
         )
         expected = {
-            "tab": (11, 12), "shift_tab": (12, 13), "muhennkann": (11, 10),
+            "tab": (11, 12), "shift_tab": (12, 13), "exit_mouse": (11, 10),
             "double_quotation": (20, 21), "eq": (24, 25),
         }
         self.assertEqual(len(combos), len(expected))

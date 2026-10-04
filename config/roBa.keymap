@@ -13,6 +13,9 @@
 #define L_SCROLL 5
 #define L_SYSTEM 6
 
+// Shared IME toggle chord. Windows requires Ctrl+Space -> IME on/off; see README.
+#define IME_TOGGLE LC(SPACE)
+
 // SCROLL must not depend on MOUSE remaining active after its timeout.
 #define MOUSE_TOP_ROW &kp LC(C) &mkp MB1 &mkp MB3 &mkp MB2 &kp LC(V)
 
@@ -42,8 +45,8 @@
             layers = <L_BASE L_MOUSE>;
         };
 
-        muhennkann {
-            bindings = <&exit_mouse_key INT_MUHENKAN>;
+        exit_mouse {
+            bindings = <&mouse_off L_MOUSE>;
             key-positions = <11 10>;
             layers = <L_BASE L_MOUSE>;
         };
@@ -78,7 +81,7 @@
     };
 
     macros {
-        // Restore the former IME-tap exit without resetting held manual layers.
+        // Exit MOUSE, then tap the host chord once; do not track the host IME state.
         exit_mouse_key: exit_mouse_key {
             compatible = "zmk,behavior-macro-one-param";
             #binding-cells = <1>;
@@ -92,13 +95,13 @@
         compatible = "zmk,keymap";
 
         BASE {
-            // Keep the existing IME keycodes until a host toggle is selected.
-            // IME taps also exit MOUSE; holds release only their own manual layer.
+            // Left thumb: IME toggle / Space / momentary NAV.
+            // Only the IME tap exits MOUSE; its hold retains SYSTEM access.
             bindings = <
 &kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &kp U  &kp I      &kp O    &kp P
 &kp A             &kp S         &kp D         &kp F                   &kp G        &kp LS(LG(S))    &lt L_SCROLL MINUS  &kp H        &kp J  &kp K      &kp L    &kp SQT
 &mt LEFT_SHIFT Z  &kp X         &kp C         &kp V                   &kp B        &kp COLON        &kp SEMICOLON       &kp N        &kp M  &kp COMMA  &kp DOT  &kp SLASH
-&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &lt_mouse_exit L_SYSTEM INT_HENKAN  &lt L_NUM SPACE  &lt_mouse_exit L_NAV INT_MUHENKAN  &kp ESCAPE  &lt L_FN ENTER                     &kp BACKSPACE
+&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &lt_mouse_exit L_SYSTEM IME_TOGGLE  &lt L_NUM SPACE  &mo L_NAV  &kp ESCAPE  &lt L_FN ENTER                     &kp BACKSPACE
             >;
 
             sensor-bindings = <&inc_dec_kp PG_UP PAGE_DOWN>;
