@@ -287,7 +287,7 @@ path.combo {
 <g transform="translate(208, 225)" class="key keypos-37">
 <rect rx="6" ry="6" x="-26" y="-26" width="52" height="52" class="key"/>
 <text x="0" y="0" class="key tap">
-<tspan x="0" dy="-0.9em">INT</tspan><tspan x="0" dy="1.2em">HENKAN</tspan>
+<tspan x="0" dy="-0.9em" style="font-size: 64%">&amp;exit_mous…</tspan><tspan x="0" dy="1.2em" style="font-size: 64%">INT_HENKAN</tspan>
 </text>
 <a href="#SYSTEM">
 <text x="0" y="24" class="key hold layer-activator">SYSTEM</text>
@@ -301,7 +301,7 @@ path.combo {
 <g transform="translate(333, 247) rotate(20.0)" class="key keypos-39">
 <rect rx="6" ry="6" x="-26" y="-26" width="52" height="52" class="key"/>
 <text x="0" y="0" class="key tap">
-<tspan x="0" dy="-0.9em" style="font-size: 88%">INT</tspan><tspan x="0" dy="1.2em" style="font-size: 88%">MUHENKAN</tspan>
+<tspan x="0" dy="-0.9em" style="font-size: 64%">&amp;exit_mous…</tspan><tspan x="0" dy="1.2em" style="font-size: 64%">INT_MUHENK…</tspan>
 </text>
 <a href="#NAV">
 <text x="0" y="24" class="key hold layer-activator">NAV</text>
@@ -331,7 +331,7 @@ path.combo {
 <g class="combo combopos-2">
 <rect rx="6" ry="6" x="42" y="95" width="28" height="26" class="combo"/>
 <text x="56" y="108" class="combo tap">
-<tspan x="56" dy="-0.6em" style="font-size: 88%">INT</tspan><tspan x="56" dy="1.2em" style="font-size: 88%">MUHENKAN</tspan>
+<tspan x="56" dy="-0.6em" style="font-size: 64%">&amp;exit_mous…</tspan><tspan x="56" dy="1.2em" style="font-size: 64%">INT_MUHENK…</tspan>
 </text>
 </g>
 <g class="combo combopos-3">
@@ -537,7 +537,7 @@ path.combo {
 <g class="combo combopos-2">
 <rect rx="6" ry="6" x="42" y="95" width="28" height="26" class="combo"/>
 <text x="56" y="108" class="combo tap">
-<tspan x="56" dy="-0.6em" style="font-size: 88%">INT</tspan><tspan x="56" dy="1.2em" style="font-size: 88%">MUHENKAN</tspan>
+<tspan x="56" dy="-0.6em" style="font-size: 64%">&amp;exit_mous…</tspan><tspan x="56" dy="1.2em" style="font-size: 64%">INT_MUHENK…</tspan>
 </text>
 </g>
 <g class="combo combopos-3">

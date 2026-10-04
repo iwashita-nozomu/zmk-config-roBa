@@ -38,9 +38,9 @@ layers:
   - LCTRL
   - LEFT WIN
   - LEFT ALT
-  - {t: INT HENKAN, h: SYSTEM}
+  - {t: '&exit_mouse_key INT_HENKAN', h: SYSTEM}
   - {t: SPACE, h: NUM}
-  - {t: INT MUHENKAN, h: NAV}
+  - {t: '&exit_mouse_key INT_MUHENKAN', h: NAV}
   - ESCAPE
   - {t: ENTER, h: FUNCTION}
   - BACKSPACE
@@ -316,7 +316,7 @@ combos:
   k: Sft+TAB
   l: [BASE, MOUSE]
 - p: [11, 10]
-  k: INT MUHENKAN
+  k: '&exit_mouse_key INT_MUHENKAN'
   l: [BASE, MOUSE]
 - p: [20, 21]
   k: '"'
