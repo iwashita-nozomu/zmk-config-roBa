@@ -18,9 +18,9 @@
 | 右親指内側、旧Backspace (40) | Esc | Escを維持 |
 | 右下、旧Delete (42) | Backspace | FUNCTION中だけDelete。NAV/NUM中はBackspace |
 | Enter (41) | タップでEnter | ホールド中はFUNCTION |
-| 無変換 (39) | タップで無変換 | ホールド中はNAV |
+| 無変換 (39) | タップでMOUSE解除＋無変換 | ホールド中はNAV |
 | Space (38) | タップでSpace | ホールド中はNUM |
-| 変換 (37) | タップで変換 | ホールド中はSYSTEM |
+| 変換 (37) | タップでMOUSE解除＋変換 | ホールド中はSYSTEM |
 | H左隣の `-` (16) | タップで `-` | ホールド中はSCROLL |
 
 上記の入口はlayer-tapなのでタップ／ホールドの判定があります。
@@ -58,6 +58,79 @@ SCROLLにも同じ上段bindingsを展開するため、MOUSEがタイムアウ�
 SCROLL中はY/U/I/O/Pの操作をFUNCTIONなどより優先します。
 SCROLLを離すと、残っているFUNCTION/NAV/NUM/MOUSEなどへ戻ります。
 SYSTEM中は管理操作が最優先で、位置16は通常の `-` です。
+
+### キータップで文字入力へ戻る
+
+従来と同じ変換／無変換のタップ（37/39）、またはBASE/MOUSE中のA+Sで、
+**MOUSEだけを解除してから、従来の変換／無変換キーコードを送ります。**
+MOUSEが既にOFFならOFFのままです。これらのホールドは従来どおりSYSTEM/NAVへの
+一時アクセスで、MOUSE解除のタップ処理は実行しません。
+
+ZMK標準のoff-only layer behaviorとmacro/hold-tapの合成で実現しています。
+`&to 0`のように、同時に保持しているNUM/NAV/FUNCTION/SCROLLを消す処理ではありません。
+ほかのレイヤーがなければ、解除後の新規Y/U/I/O/Pは文字へ戻ります。
+SCROLL保持中はMOUSEを解除してもSCROLLのクリックが残るので、文字入力へ戻る際は
+SCROLLも離してください。再びボールを動かすと自動MOUSEに入ります。
+
+任意の文字キー・クリックで自動解除する機能は追加していません。
+右親指Escは通常のEscのままです。解除キーでOSのIME状態を必ず変更できるという保証と、
+ファームウェア内のMOUSE解除は別です。IMEの1キー化は下記の未確定事項です。
+
+### ターミナルでのCtrl+C/Vに注意
+
+Y/Pの出力は生のCtrl+C/Vであり、汎用のコピー／貼り付け命令ではありません。
+Ctrl+CがTTYへ届くと、通常は前景ジョブへのSIGINTになり、コピーしたつもりで
+実行中の処理を中断する可能性があります。Ctrl+Vも、zshの標準emacs編集では
+次の文字をそのまま挿入するquoted-insertで、貼り付けではありません。
+
+WezTerm標準のクリップボード操作はCtrl+Shift+C/V（macOSではCommand+C/Vも使用可能）です。
+ただしこの組み合わせをすべてのGUIアプリへ送ればよいわけではありません。
+このPRではY/Pを勝手に別のショートカットへ変更していません。端末ごとの設定と
+GUIアプリでの用途を決めるまでは、Yを安全なコピー専用キーとして使わないでください。
+MOUSE解除だけでは、実際のCtrl+Cショートカットの意味までは変わりません。
+
+根拠: [TTYの特殊文字](https://sourceware.org/glibc/manual/latest/html_node/Special-Characters.html)、
+[zsh quoted-insert](https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html)、
+[WezTerm標準割り当て](https://wezterm.org/config/default-keys.html)。
+
+## 記号の配置とUS/JIS条件
+
+記号の配置は維持します。表はUS配列としてホストが解釈し、半角入力で余分な修飾キーを
+保持していない場合の想定です。NUMの入口はSpaceホールドです。
+
+| 記号 | 操作位置 |
+| --- | --- |
+| `:` | B右隣 (27)、通常レイヤーの専用キー |
+| `;` | N左隣 (28)、通常レイヤーの専用キー |
+| `(` / `)` | NUM + O / P |
+| `[` / `]` | NUM + N / M |
+| `{` / `}` | NUM + `,` / `.` |
+| `<` / `>` | 通常のShift + `,` / `.` |
+| `'` / `"` | 通常のSQT (21) / Shift+SQT、または既存L+SQTコンボ |
+| `\` / `\|` | NUM + `/` / N左隣 (28) |
+
+NUM+N左隣はPIPEで、通常の同じ位置はSEMICOLONです。
+NUMは自動MOUSEより上なので、MOUSEが残っていてもNUMのO/Pは括弧です。
+FUNCTION中のN/M/COMMAはF11/F12/F13を優先しますが、FUNCTIONだけを離せば
+保持中のNUMの角括弧／波括弧へ戻ります。レイヤーは必要なものだけ保持してください。
+
+ZMKの`COLON`や`LEFT_PARENTHESIS`はUnicode文字を直接送る指定ではなく、
+US配列を基準としたHIDキーとShiftの組み合わせです（例: COLONはShift+SEMICOLON、
+左丸括弧はShift+9）。ホストのUS/JIS認識が違うと、同じ名前でも実際の記号はずれます。
+**IMEの日本語ON/OFFと、キーボードのUS/JIS配列設定は別の状態です。**
+Windows/macOS両方で想定配列を合わせるか、ホスト配列ごとの変換を別途設計する必要があります。
+このPRでホスト配列の自動判定や変換を実装したわけではありません。
+
+定義: [採用ZMKブランチのkeys.h](https://github.com/zmkfirmware/zmk/blob/v0.3-branch/app/include/dt-bindings/zmk/keys.h)。
+実機では、まずシェルへ実行しないエディタの空バッファで次を入力して確認します。
+
+```text
+: ; () [] {} <> ' " \ | _ - = +
+std::vector<int> v; f(x[i], {a, b});
+```
+
+この順番を通常状態、MOUSE直後、MOUSE解除後、NUM/FUNCTION解除後で比較します。
+シェルのコマンド欄では、誤った貼付やEnterによる実行を伴う試験をしないでください。
 
 ## FUNCTION
 
@@ -99,7 +172,7 @@ SYSTEMの `/` (33) の `BT_CLR` とY〜Pのプロファイル選択は維持し�
 既存コンボ（S+D=Tab、D+F=Shift+Tab、A+S=無変換、L+`'`=`"`、C+V=`=`）は
 BASE/MOUSEに限ります。コンボのlayers判定は最上位有効レイヤーを用いるため、
 NAV/FUNCTION/NUM/SCROLL/SYSTEMでは発動しません。矢印やFキーを奪う旧グローバル設定は撤去しました。
-変換／無変換のタップやコンボに結合していた `&to 0` も撤去しています。
+変換／無変換のタップやA+SコンボのMOUSE解除は維持し、旧 `&to 0` の全層リセットだけを撤去しています。
 
 ## 未確定のIME / OS対応
 
@@ -118,7 +191,7 @@ python3 -m unittest discover -s tests -v
 ```
 
 keymap内のマクロだけを展開し、43bindings、位置、優先順位、全64通りのレイヤー集合での
-新規押下の参照先、コンボ対象範囲を検査します。
+新規押下の参照先、コンボ対象範囲、MOUSE解除の合成、記号配置を検査します。
 **ZMKヘッダはこの構造検査では読みません。ファームウェアのコンパイル、Devicetree binding検証、
 hold-tapの時間判定、HIDイベント、実機動作を検証するテストではありません。**
 

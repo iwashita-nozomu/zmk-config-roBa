@@ -54,8 +54,8 @@ class KeymapTests(unittest.TestCase):
     def test_base_entrypoints(self):
         expected = {
             7: "&kp I", 16: "&lt 5 MINUS", 17: "&kp H",
-            37: "&lt 6 INT_HENKAN", 38: "&lt 2 SPACE",
-            39: "&lt 3 INT_MUHENKAN", 40: "&kp ESCAPE",
+            37: "&lt_mouse_exit 6 INT_HENKAN", 38: "&lt 2 SPACE",
+            39: "&lt_mouse_exit 3 INT_MUHENKAN", 40: "&kp ESCAPE",
             41: "&lt 4 ENTER", 42: "&kp BACKSPACE",
         }
         for position, binding in expected.items():
@@ -69,7 +69,7 @@ class KeymapTests(unittest.TestCase):
         self.assertIn('flavor = "balanced";', SOURCE)
         self.assertIn("quick-tap-ms = <0>;", SOURCE)
 
-    def test_no_global_layer_reset_or_toggle(self):
+    def test_no_global_layer_reset_or_flip(self):
         self.assertNotRegex(EXPANDED, r"&(?:to|tog)\b")
         self.assertNotIn("to_layer_0", SOURCE)
 
@@ -132,6 +132,68 @@ class KeymapTests(unittest.TestCase):
             self.assertEqual(resolve(underlying, 17), "&kp H")
             expected = MOUSE_KEYS if mouse else LETTERS
             self.assertEqual([resolve(underlying, p) for p in range(5, 10)], expected)
+
+    def test_mouse_exit_is_off_only_and_preserves_key_output(self):
+        self.assertRegex(EXPANDED, (
+            r'(?s)mouse_off:\s*\w+\s*\{[^}]*'
+            r'compatible = "zmk,behavior-toggle-layer";[^}]*'
+            r'toggle-mode = "off";'
+        ))
+        self.assertRegex(EXPANDED, (
+            r"(?s)exit_mouse_key:\s*\w+\s*\{[^}]*"
+            r"wait-ms = <0>;[^}]*bindings = <&macro_press &mouse_off 1\s+"
+            r"&macro_tap &macro_param_1to1 &kp MACRO_PLACEHOLDER>;"
+        ))
+        self.assertRegex(EXPANDED, (
+            r'(?s)lt_mouse_exit:\s*\w+\s*\{[^}]*'
+            r'flavor = "tap-preferred";[^}]*tapping-term-ms = <200>;[^}]*'
+            r'bindings = <&mo>, <&exit_mouse_key>;'
+        ))
+        self.assertRegex(EXPANDED, (
+            r"(?s)muhennkann\s*\{\s*bindings = <&exit_mouse_key INT_MUHENKAN>;"
+        ))
+        # Only the former IME taps / combo gain mouse exit, not clicks or all keys.
+        for position, layer, code in ((37, 6, "INT_HENKAN"), (39, 3, "INT_MUHENKAN")):
+            self.assertEqual(
+                resolve({"BASE", "MOUSE"}, position),
+                f"&lt_mouse_exit {layer} {code}",
+            )
+        self.assertEqual(resolve({"BASE", "MOUSE"}, 40), "&kp ESCAPE")
+
+    def test_mouse_exit_keeps_manual_layers_in_lookup_model(self):
+        # Read the target from the macro; behavior semantics are checked above.
+        target = LAYER_NAMES[int(re.search(r"&mouse_off (\d+)", EXPANDED)[1])]
+        for flags in itertools.product((False, True), repeat=6):
+            active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
+            after = active - {target}
+            self.assertEqual(after, active - {"MOUSE"})
+            self.assertEqual(after - {target}, after)  # Repeated taps cannot turn MOUSE on.
+            for position in (27, 28, 39, 40, 41, 42):
+                self.assertEqual(resolve(after, position), resolve(active, position))
+        self.assertEqual(
+            [resolve({"BASE", "MOUSE"} - {target}, p) for p in range(5, 10)], LETTERS
+        )
+
+    def test_punctuation_and_brackets_survive_automouse(self):
+        base = {21: "SQT", 27: "COLON", 28: "SEMICOLON", 31: "COMMA", 32: "DOT", 33: "SLASH"}
+        symbols = {
+            8: "LEFT_PARENTHESIS", 9: "RIGHT_PARENTHESIS", 16: "UNDERSCORE",
+            27: "EQUAL", 28: "PIPE", 29: "LEFT_BRACKET", 30: "RIGHT_BRACKET",
+            31: "LEFT_BRACE", 32: "RIGHT_BRACE", 33: "BACKSLASH",
+        }
+        for mouse in (set(), {"MOUSE"}):
+            for position, code in base.items():
+                self.assertEqual(resolve({"BASE"} | mouse, position), f"&kp {code}")
+            for position, code in symbols.items():
+                self.assertEqual(resolve({"BASE", "NUM"} | mouse, position), f"&kp {code}")
+        # Returning from Fn must uncover NUM's brackets, not discard NUM itself.
+        for position in (29, 30, 31):
+            self.assertRegex(resolve({"BASE", "NUM", "FUNCTION"}, position), r"&kp F1[123]")
+            self.assertEqual(resolve({"BASE", "NUM"}, position), f"&kp {symbols[position]}")
+
+    def test_punctuation_combos_keep_literal_outputs(self):
+        for name, code in (("double_quotation", "DOUBLE_QUOTES"), ("eq", "EQUAL")):
+            self.assertRegex(EXPANDED, rf"(?s){name}\s*\{{\s*bindings = <&kp {code}>;")
 
     def test_combos_do_not_capture_manual_layer_keys(self):
         combos = re.findall(
