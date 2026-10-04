@@ -1,5 +1,7 @@
 # zmk-config-roBa
 
+<img src="keymap-drawer/roBa.svg" alt="roBa keymap">
+
 `iwashita-nozomu/zmk-config-roBa` の個人用配置です。
 配置の正本は [config/roBa.keymap](config/roBa.keymap) です。
 [追跡Issue #226](https://github.com/iwashita-nozomu/project_template/issues/226) に
@@ -122,7 +124,9 @@ hold-tapの時間判定、HIDイベント、実機動作を検証するテスト
 
 正規ファームウェアビルドは既存の [.github/workflows/build.yml](.github/workflows/build.yml)、
 図の生成は既存の [.github/workflows/draw.yml](.github/workflows/draw.yml) の
-`Draw Keymap` workflowです。対象ブランチを指定して手動実行し、
-`config/roBa.keymap` と `config/roBa.json` から生成してください。
-変更前の `keymap-drawer/roBa.{yaml,svg}` は古い配置を現行図として表示しないため撤去しています。
-図を手編集する別経路は追加していません。現在の検証成否・実行阻害要因はIssue/PRに記録します。
+`Draw Keymap` workflowです。keymap・配置JSON・描画設定・描画workflowの変更をpushすると、
+同じブランチに `keymap-drawer/roBa.{yaml,svg}` を生成・コミットします。
+対象ブランチを指定した手動実行も可能です。入力は `config/roBa.keymap` と
+`config/roBa.json` で、図を手編集する別経路は追加していません。
+生成図を更新したコミット自身はpush対象の入力パスを変更しないため、描画を再帰起動しません。
+現在の検証成否・実行阻害要因はIssue/PRに記録します。
