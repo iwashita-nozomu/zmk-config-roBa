@@ -17,7 +17,7 @@ layers:
   - F
   - G
   - Sft+Gui+S
-  - {t: '-', h: SCROLL}
+  - '-'
   - H
   - J
   - K
@@ -30,7 +30,7 @@ layers:
   - B
   - ':'
   - ;
-  - N
+  - {t: N, h: SCROLL}
   - M
   - ','
   - .
@@ -38,10 +38,10 @@ layers:
   - LCTRL
   - LEFT WIN
   - LEFT ALT
-  - {t: '&ime_toggle LANG1', h: SYSTEM}
+  - '&ime_toggle LANG1'
   - {t: SPACE, h: NUM}
   - NAV
-  - ESCAPE
+  - {t: ESCAPE, h: SYSTEM}
   - {t: ENTER, h: FUNCTION}
   - BACKSPACE
   IME_ALT:
@@ -82,7 +82,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: '&ime_toggle LANG2', h: SYSTEM}
+  - '&ime_toggle LANG2'
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -105,7 +105,44 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
   - SCROLL
+  - SLOW
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  SLOW:
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - Ctl+C
+  - '&mkp MB1'
+  - '&mkp MB3'
+  - '&mkp MB2'
+  - Ctl+V
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -120,6 +157,13 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - SCROLL
+  - {t: SLOW, type: held}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -193,7 +237,7 @@ layers:
   - {t: ▽, type: trans}
   - END
   - {t: ▽, type: trans}
-  - SCROLL
+  - {t: ▽, type: trans}
   - LEFT ARROW
   - DOWN ARROW
   - UP ARROW
@@ -237,7 +281,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - SCROLL
+  - {t: ▽, type: trans}
   - F6
   - F7
   - F8
@@ -281,7 +325,6 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {type: held}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -295,7 +338,8 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - {t: SCROLL, type: held}
+  - SLOW
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -325,16 +369,16 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - '-'
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - '1'
   - '2'
   - '3'
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - '&bootloader'
@@ -346,25 +390,25 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
   - {type: held}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
 combos:
 - p: [11, 12]
   k: TAB
-  l: [BASE, IME_ALT, MOUSE]
+  l: [BASE, IME_ALT, MOUSE, SLOW]
 - p: [12, 13]
   k: Sft+TAB
-  l: [BASE, IME_ALT, MOUSE]
+  l: [BASE, IME_ALT, MOUSE, SLOW]
 - p: [11, 10]
   k: '&mouse_off 2'
-  l: [BASE, IME_ALT, MOUSE]
+  l: [BASE, IME_ALT, MOUSE, SLOW]
 - p: [20, 21]
   k: '"'
-  l: [BASE, IME_ALT, MOUSE]
+  l: [BASE, IME_ALT, MOUSE, SLOW]
 - p: [24, 25]
   k: '='
-  l: [BASE, IME_ALT, MOUSE]
+  l: [BASE, IME_ALT, MOUSE, SLOW]
