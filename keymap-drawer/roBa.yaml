@@ -182,11 +182,11 @@ layers:
   - {t: ▽, type: trans}
   - Ctl+TAB
   - {t: ▽, type: trans}
-  - Y
-  - U
-  - I
-  - O
-  - P
+  - ''
+  - ''
+  - ''
+  - ''
+  - ''
   - HOME
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
