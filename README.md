@@ -3,146 +3,110 @@
 <img src="keymap-drawer/roBa.svg" alt="roBa keymap">
 
 `iwashita-nozomu/zmk-config-roBa` の個人用配置です。
-配置の正本は [config/roBa.keymap](config/roBa.keymap) です。
-[追跡Issue #226](https://github.com/iwashita-nozomu/project_template/issues/226) に
-変更理由・検証結果・未解決事項を記録します。ファームウェアを実機へ書き込むまでは、
-この配置が実機で有効になったとは限りません。ZMK Studioで保存した設定がある場合も
-ビルド時のkeymapと異なる可能性があるため、書き込み後に実際の割り当てを確認してください。
+配置の正本は [config/roBa.keymap](config/roBa.keymap)、変更理由・検証結果は
+[追跡Issue #226](https://github.com/iwashita-nozomu/project_template/issues/226) に記録します。
+PR公開やビルド成功は実機への適用とは別です。書き込み後には、ZMK Studioの保存設定も含めて
+実際の割り当てを確認してください。確認のためにペアリング情報を消去しないでください。
 
 ## 基本操作
 
-位置名は通常レイヤーの文字、位置番号は0始まりです。
+位置名は通常レイヤーの文字、番号は0始まりです。
 
-| 位置 | 通常 | レイヤー保持中 |
+| 位置 | タップ／通常操作 | 保持中 |
 | --- | --- | --- |
-| 右親指内側、旧Backspace (40) | Esc | Escを維持 |
-| 右下、旧Delete (42) | Backspace | FUNCTION中だけDelete。NAV/NUM中はBackspace |
-| Enter (41) | タップでEnter | ホールド中はFUNCTION |
-| NAV、旧無変換 (39) | 文字・IME入力なし | 押した瞬間からNAV、離すと解除 |
-| Space (38) | タップでSpace | ホールド中はNUM |
-| 半角／全角切替、旧変換 (37) | タップでMOUSE解除＋LANG1/LANG2を交互送信 | ホールド中はSYSTEM |
-| H左隣の `-` (16) | タップで `-` | ホールド中はSCROLL |
+| 左親指、Space左 (37) | MOUSE解除＋LANG1/LANG2を交互に1回送信 | 設定レイヤーとの兼用なし |
+| Space (38) | Space | NUM |
+| 左親指、Space右 (39) | 文字・IME入力なし | 押下時からNAV、離すと解除 |
+| 右親指Esc (40) | Esc | SYSTEM |
+| 右親指Enter (41) | Enter | FUNCTION |
+| 右下 (42) | Backspace | FUNCTION中だけDelete |
+| N (29) | N | 通常層からはSCROLL |
+| M (30) | 通常層では普通のM | MOUSE/SCROLL/SLOW中だけ低速 |
+| H左隣の `-` (16) | 普通の `-` | スクロール兼用を撤去 |
 
-左親指はSpaceを挟んで、左が半角／全角切替 (37)、右が専用NAV (39) です。
-**Ctrl+Spaceは送信しません。補完用の設定を変更せず、LANG1/LANG2を交互に送ります。**
-送信順の状態とホストのIME状態の違いは、下記「半角／全角切替と送信順」を参照してください。
+**マウス操作中はN＝スクロール、M＝低速を横並びで使います。**
+通常NとSpace/Esc/Enterは標準layer-tapの判定が入り、タップは文字、ホールドは対象レイヤーです。
+MOUSE/SCROLL/SLOWのN/Mと専用NAVは `&mo` なので、押下時に有効、解放時に解除します。
+左親指IMEは押下ごとにマクロを1回実行し、保持してもSYSTEMには入りません。
 
-IME・Space・Enter・通常の位置16はlayer-tapなのでタップ／ホールドの判定があります。
-NAVの位置39とMOUSE/NAV/FUNCTIONの位置16は、押した瞬間から有効になるmomentaryです。
-いずれも保持を離すと対象レイヤーだけを解除し、他の有効レイヤーをリセットしません。
-解除後の新規押下は、その時点の有効レイヤーで解決します。すでに押したキーを、
-途中から別のHIDキーへ変換するという意味ではありません。
+保持解除はそのレイヤーだけを外し、ほかの保持状態やIME送信順をリセットしません。
+解放後の**新しい押下**が残ったレイヤーで解決されます。既に押下中のキーを途中で別のHIDキーに
+変換する動作ではありません。通常Nを押しっぱなしにして文字Nを反復する操作はSCROLLになります。
 
-Backspace/Deleteの追加コンボはありません。Ctrl・GUI (Win/Command)・Altの専用キー、
-Z/ShiftとNUMの0/Shiftは従来のままです。H/Iは通常の文字キーです。
+Ctrl・GUI (Win/Command)・Altの専用キー、Z/ShiftとNUMの0/Shiftは維持しています。
+H/Iは普通の文字キーです。削除コンボは追加していません。
 
-## NAV
+## MOUSE / SCROLL / SLOW
 
-左親指の位置39を押している間、右手ホーム段のH/J/K/Lを左/下/上/右にします。
-入口は `&mo L_NAV` なので長押し判定を待たず、離すとNAVだけが解除されます。
-旧E/S/D/Fの矢印割り当ては外しました。左側のHome/End、Ctrl+Tab、
-Ctrl+Shift+Tab、GUI+Shift+左右矢印、エンコーダーのCtrl+PageUp/PageDownは維持します。
-NAVのY/U/I/O/Pは `&none` で無効化し、文字も下位MOUSEのコピー／クリックも送りません。
-`&trans` ではないため、下位NUMの記号にも流れません。NAVを離すと、その時点で残っている
-BASE/NUM/MOUSEなどの割り当てに戻ります。別途保持した上位FUNCTION/SCROLL/SYSTEMの
-優先順位は変えません。
-
-## MOUSE / SCROLL
-
-| 位置 | MOUSEとSCROLLで共通の出力 |
+| 位置 | マウス操作中の出力 |
 | --- | --- |
-| Y | Ctrl+C |
-| U | 左クリック (MB1) |
-| I | 中クリック (MB3) |
-| O | 右クリック (MB2) |
-| P | Ctrl+V |
+| Y / P | Ctrl+C / Ctrl+V |
+| U / I / O | 左／中／右クリック (MB1/MB3/MB2) |
+| **N / M** | **保持でSCROLL／保持でSLOW** |
 
-MOUSE中はH左隣を保持してトラックボールを動かすとスクロールします。
-通常時は同じ位置のホールドで入れます。HJKLとは位置が重なりません。
-SCROLLにも同じ上段bindingsを展開するため、MOUSEがタイムアウトした後や、
-通常レイヤーから直接SCROLLへ入った場合も、UIOが文字へ落ちません。
-押しっぱなしのクリックはボタン保持として使います。
+ボールを動かすと自動MOUSEに入り、N/Mを即時の操作キーとして使えます。
+通常状態から直接スクロールする場合はNをホールドします。通常状態で先にMを押しても低速には
+入らず文字Mです。MOUSEに入ってからM、またはNホールドでSCROLLに入ってからMを押します。
 
-SCROLL中はY/U/I/O/Pの操作をFUNCTIONなどより優先します。
-SCROLLを離すと、残っているFUNCTION/NAV/NUM/MOUSEなどへ戻ります。
-SYSTEM中は管理操作が最優先で、位置16は通常の `-` です。
+| 保持中 | ボールの動作 |
+| --- | --- |
+| なし | 通常カーソル移動 |
+| M | 低速カーソル移動 |
+| N | 通常スクロール |
+| N＋M | 低速スクロール |
+
+MOUSE中からN/Mをどちらの順で押しても組み合わせられます。
+両方保持した状態からMだけ離すと通常スクロール、Nだけ離すと低速カーソル移動へ戻ります。
+MOUSEがタイムアウトしても、保持中SCROLL/SLOWのUIOクリックやN/M入口は文字に落ちません。
+3つのレイヤーのbindingsは `POINTING_BINDINGS` を共有し、内容を二重管理しません。
+
+低速倍率は入力移動量の **1/4** です。`trackball_listener` のSLOW overrideでZMK標準の
+`zip_xy_scaler 1 4` と `zip_scroll_scaler 1 4` を使い、通常のCPI・OS設定は変更しません。
+XYと縦横ホイールそれぞれの端数を標準実装が保持します。小さい入力を毎回捨てる設定ではありません。
+端数はキーを離すと消す独自処理を追加せず、標準scalerのまま次の低速入力へ持ち越します。
+
+既存PMW3610のSNIPEとSCROLLは排他的なので、SNIPEは使いません。
+SLOWをSCROLLより下位に置き、listenerはSLOWが**有効かどうか**で倍率を選びます。
+このためSCROLL中にも低速が効き、低速キーを押すことでスクロールがカーソル移動へ化けません。
+NUMのN/Mは角括弧、FUNCTIONのN/MはF11/F12が優先し、文字・記号・Fキーの操作を守ります。
+
+倍率は画面上の速度の厳密な1/4を保証しません。OS加速やアプリのスクロール処理も影響します。
+スクロールは既存ドライバの整数ホイールイベントを縮小するため、同方向では概ね4イベントごとに
+1イベントを出す方式です。高解像度の滑らかなスクロールを新設したわけではありません。
+クリックは押している間ボタンを保持し、ドラッグに使えます。
+
+根拠: [ZMK scaler](https://zmk.dev/docs/keymaps/input-processors/scaler)、
+[採用ZMKのscaler定義](https://github.com/zmkfirmware/zmk/blob/v0.3-branch/app/dts/input/processors/scaler.dtsi)、
+[listenerの有効層判定](https://github.com/zmkfirmware/zmk/blob/v0.3-branch/app/src/pointing/input_listener.c)。
 
 ### キータップで文字入力へ戻る
 
-**左親指のIMEキー (37) をタップすると、MOUSEを解除し、LANG1またはLANG2を1回送ります。**
-同時に次回の送信先を反転します。
-入力言語を変えずに戻るには、BASE/IME_ALT/MOUSE中のA+Sを押します。A+SはMOUSE解除だけで、
-キー入力を送らず、LANG1/LANG2の送信順も変更しません。
-MOUSEが既にOFFならOFFのままです。IMEキーのホールドはSYSTEMへの一時アクセスで、
-MOUSE解除・IME入力・送信順反転のタップ処理は実行しません。専用NAV (39) はIME入力を送りません。
+左親指IME (37) はMOUSE解除＋LANG入力、A＋SはMOUSE解除だけです。
+A＋SはBASE/IME_ALT/MOUSE/SLOWで使用でき、入力言語やLANG送信順を変えません。
+MOUSEが既にOFFならOFFのままです。SCROLL/SLOWを保持中ならその状態は残るため、
+文字入力へ戻るときはN/Mも離します。再びボールを動かすと自動MOUSEへ入ります。
+任意の文字キー・クリックで自動解除する処理や、全層を消す `&to 0` はありません。
 
-ZMK標準のoff-only layer behaviorとmacro/hold-tapの合成で実現しています。
-`&to 0`のように、同時に保持しているNUM/NAV/FUNCTION/SCROLLを消す処理ではありません。
-ほかのレイヤーがなければ、解除後の新規Y/U/I/O/Pは文字へ戻ります。
-SCROLL保持中はMOUSEを解除してもSCROLLのクリックが残るので、文字入力へ戻る際は
-SCROLLも離してください。再びボールを動かすと自動MOUSEに入ります。
+### ターミナルでのCtrl+C/V
 
-任意の文字キー・クリックで自動解除する機能は追加していません。
-右親指Escは通常のEscのままです。解除キーでOSのIME状態を必ず変更できるという保証と、
-ファームウェア内のMOUSE解除は別です。LANGキーの対応条件と送信順の制約は下記を参照してください。
+Y/Pは「ターミナルではマウスを使わない」という利用方針でCtrl+C/Vを維持します。
+生のCtrl+CがTTYへ届けば通常はSIGINTで前景ジョブを中断し、Ctrl+Vもzshの標準Emacs編集では
+quoted-insertで、貼り付けとは限りません。端末へ移った直後はA＋SでMOUSEを解除し、N/Mも離します。
+WezTerm標準のクリップボード操作はCtrl+Shift+C/V（macOSではCommand+C/Vも）ですが、
+全GUIアプリへそのまま適用できるわけではありません。Ctrl/Commandの自動変換はしていません。
 
-### ターミナルでのCtrl+C/Vに注意
+根拠: [TTY特殊文字](https://sourceware.org/glibc/manual/latest/html_node/Special-Characters.html)、
+[zsh](https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html)、
+[WezTerm](https://wezterm.org/config/default-keys.html)。
 
-Y/Pの出力は生のCtrl+C/Vであり、汎用のコピー／貼り付け命令ではありません。
-Ctrl+CがTTYへ届くと、通常は前景ジョブへのSIGINTになり、コピーしたつもりで
-実行中の処理を中断する可能性があります。Ctrl+Vも、zshの標準emacs編集では
-次の文字をそのまま挿入するquoted-insertで、貼り付けではありません。
+## NAV / FUNCTION
 
-WezTerm標準のクリップボード操作はCtrl+Shift+C/V（macOSではCommand+C/Vも使用可能）です。
-ただしこの組み合わせをすべてのGUIアプリへ送ればよいわけではありません。
-Y/Pは「ターミナルではマウスを使わない」という利用方針に合わせ、Ctrl+C/Vを維持します。
-ターミナルへ移った直後にMOUSEが残っている場合は、A+Sで解除してから入力してください。
-MOUSE解除だけでは、実際のCtrl+Cショートカットの意味までは変わりません。
+左親指NAV (39) を保持中、H/J/K/Lが左/下/上/右です。
+Y/U/I/O/Pは `&none` で、文字も下位MOUSE/NUMの操作も送りません。
+Home/End、Ctrl+Tab、Ctrl+Shift+Tab、GUI+Shift+左右矢印、エンコーダーのCtrl+PageUp/PageDownは維持。
+NAVを離すと残ったレイヤーの割り当てへ戻ります。
 
-根拠: [TTYの特殊文字](https://sourceware.org/glibc/manual/latest/html_node/Special-Characters.html)、
-[zsh quoted-insert](https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html)、
-[WezTerm標準割り当て](https://wezterm.org/config/default-keys.html)。
-
-## 記号の配置とUS/JIS条件
-
-記号の配置は維持します。表はUS配列としてホストが解釈し、半角入力で余分な修飾キーを
-保持していない場合の想定です。NUMの入口はSpaceホールドです。
-
-| 記号 | 操作位置 |
-| --- | --- |
-| `:` | B右隣 (27)、通常レイヤーの専用キー |
-| `;` | N左隣 (28)、通常レイヤーの専用キー |
-| `(` / `)` | NUM + O / P |
-| `[` / `]` | NUM + N / M |
-| `{` / `}` | NUM + `,` / `.` |
-| `<` / `>` | 通常のShift + `,` / `.` |
-| `'` / `"` | 通常のSQT (21) / Shift+SQT、または既存L+SQTコンボ |
-| `\` / `\|` | NUM + `/` / N左隣 (28) |
-
-NUM+N左隣はPIPEで、通常の同じ位置はSEMICOLONです。
-NUMは自動MOUSEより上なので、MOUSEが残っていてもNUMのO/Pは括弧です。
-FUNCTION中のN/M/COMMAはF11/F12/F13を優先しますが、FUNCTIONだけを離せば
-保持中のNUMの角括弧／波括弧へ戻ります。レイヤーは必要なものだけ保持してください。
-
-ZMKの`COLON`や`LEFT_PARENTHESIS`はUnicode文字を直接送る指定ではなく、
-US配列を基準としたHIDキーとShiftの組み合わせです（例: COLONはShift+SEMICOLON、
-左丸括弧はShift+9）。ホストのUS/JIS認識が違うと、同じ名前でも実際の記号はずれます。
-**IMEの日本語ON/OFFと、キーボードのUS/JIS配列設定は別の状態です。**
-Windows/macOS両方で想定配列を合わせるか、ホスト配列ごとの変換を別途設計する必要があります。
-このPRでホスト配列の自動判定や変換を実装したわけではありません。
-
-定義: [採用ZMKブランチのkeys.h](https://github.com/zmkfirmware/zmk/blob/v0.3-branch/app/include/dt-bindings/zmk/keys.h)。
-実機では、まずシェルへ実行しないエディタの空バッファで次を入力して確認します。
-
-```text
-: ; () [] {} <> ' " \ | _ - = +
-std::vector<int> v; f(x[i], {a, b});
-```
-
-この順番を通常状態、MOUSE直後、MOUSE解除後、NUM/FUNCTION解除後で比較します。
-シェルのコマンド欄では、誤った貼付やEnterによる実行を伴う試験をしないでください。
-
-## FUNCTION
+FUNCTIONはEnterホールド中だけです。
 
 ```text
 通常の位置:  Y    U    I    O    P
@@ -157,105 +121,102 @@ FUNCTION:  F11  F12  F13   透過  透過
 右下 (42): Delete
 ```
 
-F11は旧 `/` からN、F12は旧右下からM、F13は旧H左隣から `,` へ移しました。
-H左隣はFUNCTION中もmomentary SCROLLです。
+Fnを離すと右下はBackspaceです。NUMを同時に保持していた場合、N/M/COMMAはNUMの括弧へ戻ります。
+SCROLLを別途保持している間は、UIOとN/Mのポインティング操作をFUNCTIONより優先します。
 
-## 優先順位と既存操作の移設
+## SYSTEM：右手に集約
 
-レイヤー番号の大きい方を優先します。
+**右親指Esc (40) はタップEsc、ホールド中だけSYSTEMです。**
+左親指IMEのSYSTEM兼用と専用hold-tap定義を撤去しました。設定への入口を含め右手側に集約しています。
+
+| SYSTEM中の右手位置 | 動作 |
+| --- | --- |
+| Y/U/I/O/P | Bluetoothプロファイル0/1/2/3/4を選択 |
+| H/J/K | 既存の数字1/2/3送信（旧X/C/Vから移設） |
+| N左隣 (28) | bootloader |
+| `.` (32) | **全Bluetoothペアリング情報を消去** |
+| `/` (33) | 選択プロファイルのペアリング情報を消去 |
+
+数字1/2/3は普通のキー送信で、CPI設定などの新機能ではありません。
+SYSTEMの左手位置には専用の設定割り当てを置かず透過にします。
+Escのタップ／ホールド判定が加わるので、通常の即時Escとは操作感が変わります。
+SYSTEMからの戻りはEscキーを離すだけで、IME送信順や他の保持レイヤーをリセットしません。
+**bootloaderとペアリング消去は通常入力ではありません。検証のために実行しないでください。**
+
+## 記号とUS/JIS条件
+
+表はホストがUS配列として解釈し、半角入力で余分な修飾キーを保持していない場合の想定です。
+NUMの入口はSpaceホールドです。
+
+| 記号 | 操作位置 |
+| --- | --- |
+| `:` / `;` | B右隣(27) / N左隣(28)、通常層の専用キー |
+| `(` / `)` | NUM + O / P |
+| `[` / `]` | NUM + N / M |
+| `{` / `}` | NUM + `,` / `.` |
+| `<` / `>` | 通常のShift + `,` / `.` |
+| `'` / `"` | 通常SQT(21) / Shift+SQT、またはL+SQTコンボ |
+| `\` / `\|` | NUM + `/` / N左隣(28) |
+
+NUMはMOUSE/SLOWより上なので、括弧はクリックや低速に化けません。
+低速は引用符でなくMに置くため、引用符のコンボは変更しません。
+ZMKの記号名はUS基準のHIDキーと修飾で、Unicode文字送信ではありません。
+**IMEの日本語ON/OFFとUS/JIS配列認識は別条件です。** ホスト配列の自動変換は実装していません。
+[キー定義](https://github.com/zmkfirmware/zmk/blob/v0.3-branch/app/include/dt-bindings/zmk/keys.h)と照合し、
+実機ではシェルでなく空のエディタで、通常／マウス直後／解除後に次を入力して確認します。
 
 ```text
-BASE(0) < IME_ALT(1) < MOUSE(2) < NUM(3) < NAV(4) < FUNCTION(5) < SCROLL(6) < SYSTEM(7)
+: ; () [] {} <> ' " \ | _ - = +
+std::vector<int> v; f(x[i], {a, b});
 ```
 
-自動MOUSEより手動のNUM/NAV/FUNCTIONを優先します。
-同時にNAVとFUNCTIONを保持したときはFUNCTIONのFキーが優先します。
-SCROLLはポインティング操作の最上位、SYSTEMは管理用の最上位です。
-番号はkeymap冒頭の定義・レイヤー順・trackball設定で揃えています。
+## LANG交互送信とレイヤー順序
 
-NUMの右下にあった `|` はN左隣のキー (28、通常は `;`) へ移しました。
-SYSTEMの右下にあった `BT_CLR_ALL` は `.` (32) へ移しました。
-SYSTEMの `/` (33) の `BT_CLR` とY〜Pのプロファイル選択は維持します。
-**SYSTEM + `.` は全Bluetoothペアリング情報を消去する操作です。**
-右下は管理層でも通常はBackspaceで、FUNCTIONを同時に保持した場合だけDeleteです。
+左親指IME (37) は押下ごとにLANG1 → LANG2 → LANG1 → … を送ります。初回はLANG1です。
+Windowsの対応する日本語Microsoft IMEでLANG1=ImeOn、LANG2=ImeOff、Mac日本語入力でかな／英数です。
+Ctrl+Spaceは補完用なので送らず、LANG5や旧変換／無変換も送りません。別IMEや再割り当てツールは実機確認が必要です。
 
-既存コンボ（S+D=Tab、D+F=Shift+Tab、A+S=MOUSE解除のみ、L+`'`=`"`、C+V=`=`）は
-BASE/IME_ALT/MOUSEに限ります。コンボのlayers判定は最上位有効レイヤーを用いるため、
-NAV/FUNCTION/NUM/SCROLL/SYSTEMでは発動しません。矢印やFキーを奪う旧グローバル設定は撤去しました。
-IMEタップとA+SのMOUSE解除は維持します。変換／無変換の送信と旧 `&to 0` の全層リセットは残しません。
+BASEの37は `&ime_toggle LANG1`、IME_ALTの37は `&ime_toggle LANG2`。
+共通マクロがMOUSEだけをOFFにし、IME_ALTの送信順ビットを反転し、渡されたLANGを1回送ります。
+IME_ALTの残り42位置とsensorは透過です。独自Cコード・OS検出・永続化は追加していません。
 
-## 半角／全角切替と送信順
+**覚えるのはroBaの送信順であり、PCの現在のIME状態ではありません。**
+他の入力機器や画面操作、アプリごとの状態、接続先変更、再起動後には、既に有効なモードを
+再指定する場合があります。全接続先共通の状態で、再起動で初期化します。起動時にLANGは送信しません。
+実機では同じキーを4回押して往復を確認し、EscのSYSTEMホールドとNAV/A＋SではLANGが出ないことを確認します。
 
-**左親指の1キー (37) のタップごとに、LANG1 → LANG2 → LANG1 → … と送信します。**
-LANG1はWindowsのImeOn／Macのかな、LANG2はWindowsのImeOff／Macの英数です。
-Ctrl+SpaceやLANG5は使わず、補完用ショートカットの設定変更も不要です。
-Windowsは対応バージョンの日本語Microsoft IME、Macは日本語入力でのLANGキー対応を前提とします。
-別のIMEやキー再割り当てツールによる挙動は、そのホスト上で確認してください。
+```text
+BASE0 < IME_ALT1 < MOUSE2 < SLOW3 < NUM4 < NAV5 < FUNCTION6 < SCROLL7 < SYSTEM8
+```
 
-### 1ビットの実装
+番号はkeymapの定義・レイヤー順・trackball・listenerで合わせています。
+SYSTEMを保持中は管理操作が最優先です。既存コンボ（S+D=Tab、D+F=Shift+Tab、A+S=MOUSE解除、
+L+SQT=ダブルクォート、C+V=等号）はBASE/IME_ALT/MOUSE/SLOWに限定します。
+NUM/NAV/FUNCTION/SCROLL/SYSTEMでは発動しないため、記号や移動/Fキーを奪いません。
 
-`IME_ALT` の有効／無効だけを送信順の1ビットに使います。
+レイヤー追加で番号が変わっています。ZMK Studioの保存済みkeymapをそのまま混在させず、
+必要な設定を控えてstock keymapと照合してください。settings_resetやペアリング消去を自動実行しません。
 
-| タップ直前のIME_ALT | 送るキー | タップ後 |
-| --- | --- | --- |
-| OFF（再起動時の初期状態） | LANG1 | ON |
-| ON | LANG2 | OFF |
-
-BASEの位置37は `&lt_ime L_SYSTEM LANG1`、IME_ALTの同位置は
-`&lt_ime L_SYSTEM LANG2` です。共通マクロがMOUSEをOFFにし、IME_ALTだけを
-反転し、渡されたLANGキーを1回タップします。SYSTEMホールド時はこのマクロを実行しません。
-標準のmacro・hold-tap・layer toggleの合成だけで、新しいC behaviorはありません。
-
-IME_ALTの残り42キーは透過、sensor bindingも追加しません。
-MOUSEより下位に置くため、IME_ALTが有効でもクリック、スクロール、NAV、FUNCTION、
-記号の実効bindingは変わりません。既存コンボもIME_ALTを有効対象に含めています。
-MOUSEのタイムアウトやA+SはIME_ALTを変更せず、NAV/FUNCTION等の解放もこのビットを消しません。
-
-### 状態の限界と実機確認
-
-**記憶するのはroBaの送信順であり、PCの現在のIME状態ではありません。**
-再起動後の初回はLANG1で、起動時にLANGキーを自動送信することはありません。
-別のキーボードや画面操作でIMEを変えた場合、アプリごとに入力モードが違う場合、
-または接続先を切り替えた場合、最初のタップが既に有効なモードを指定することがあります。
-そのキーがホストに受理されれば以後は交互です。状態は全接続先で共有し、再起動時に初期化します。
-接続先別の永続化・OS自動判定・ホスト状態同期は追加しません。
-
-レイヤー番号を1段ずらしているため、ZMK Studioに保存済みのkeymapがある場合は
-そのまま混在させないでください。必要な設定を控え、ビルドしたstock keymapとの一致を確認します。
-ペアリングまで消すsettings_resetをこの確認のために自動実行することはありません。
-
-実機では余分な修飾を離し、空のエディタで同じキーを4回タップして
-日本語／英数の交互指定、SYSTEMホールドで送信順が進まないこと、
-NAV保持／解除とA+SがIME入力を送らないことを確認します。
-HIDログ上のLANG1/LANG2交互送信と、画面の実際の入力モードは分けて確認してください。
-**実機での送信・IME切替は未検証**です。US/JIS記号配列認識も独立の条件です。
-
-根拠: [MicrosoftのImeOn/ImeOff HID対応](https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/keyboard-japan-ime)、
-[ZMKのLANGキーとmacOS対応](https://zmk.dev/docs/keymaps/list-of-keycodes#language)、
-[ZMKレイヤー](https://zmk.dev/docs/keymaps/behaviors/layers)、
-[ZMKマクロ](https://zmk.dev/docs/keymaps/behaviors/macros)。
-
-MOUSEのY/PはCtrl+C/Vのままで、macOS向けCommand+C/Vへの自動切替はしません。
-Ctrl/Command差の自動吸収、修飾キー再配置は今回の変更には含めません。
+根拠: [MicrosoftのLANG対応](https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/keyboard-japan-ime)、
+[ZMK LANGキー](https://zmk.dev/docs/keymaps/list-of-keycodes#language)、
+[レイヤー](https://zmk.dev/docs/keymaps/behaviors/layers)、[マクロ](https://zmk.dev/docs/keymaps/behaviors/macros)。
 
 ## 検証と描画
 
-構造回帰検査はPython 3とCプリプロセッサ `cpp` で実行します。
+既存の構造回帰はPython 3と `cpp` で実行します。
 
 ```sh
 python3 -m unittest discover -s tests -v
+python3 -m compileall -q tests
 ```
 
-keymap内のマクロだけを展開し、43bindings、位置、優先順位、全128通りのレイヤー集合での
-新規押下の参照先、LANG1/LANG2の交互送信・専用NAV、コンボ対象範囲、MOUSE解除の合成、記号配置を検査します。
-**ZMKヘッダはこの構造検査では読みません。ファームウェアのコンパイル、Devicetree binding検証、
-hold-tapの時間判定、HIDイベント、実機動作を検証するテストではありません。**
+9層×43位置、全256層集合、LANG送信順、NAVの無入力、N/Mの組合せと解放順、MOUSEタイムアウト時の
+参照先、XY/scroll scaler設定、設定操作の右手集約、既存の記号・Fキーを検査します。
+**これはkeymap内マクロを展開する静的モデルであり、ZMKヘッダ・実HID・タイマー・ホストの出力・
+物理的な操作感を検証するものではありません。** 実機の速度・スクロール量・連打・解放順は未検証です。
 
-正規ファームウェアビルドは既存の [.github/workflows/build.yml](.github/workflows/build.yml)、
-図の生成は既存の [.github/workflows/draw.yml](.github/workflows/draw.yml) の
-`Draw Keymap` workflowです。keymap・配置JSON・描画設定・描画workflowの変更をpushすると、
-同じブランチに `keymap-drawer/roBa.{yaml,svg}` を生成・コミットします。
-対象ブランチを指定した手動実行も可能です。入力は `config/roBa.keymap` と
-`config/roBa.json` で、図を手編集する別経路は追加していません。
-生成図を更新したコミット自身はpush対象の入力パスを変更しないため、描画を再帰起動しません。
-現在の検証成否・実行阻害要因はIssue/PRに記録します。
+正規firmware buildは [.github/workflows/build.yml](.github/workflows/build.yml)、図は既存の
+[Draw Keymap](.github/workflows/draw.yml)です。keymap/配置JSON/描画設定の入力変更をpushすると、
+同じブランチへ `keymap-drawer/roBa.{yaml,svg}` を生成・コミットします。
+生成物自体は入力トリガーではなく、描画を再帰起動しません。別の生成経路や手編集した図は追加しません。
+成功したSHA、実行結果と検証限界はIssue/PRで追跡できます。
