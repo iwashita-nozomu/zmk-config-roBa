@@ -38,12 +38,56 @@ layers:
   - LCTRL
   - LEFT WIN
   - LEFT ALT
-  - {t: '&exit_mouse_key LC(SPACE)', h: SYSTEM}
+  - {t: '&ime_toggle LANG1', h: SYSTEM}
   - {t: SPACE, h: NUM}
   - NAV
   - ESCAPE
   - {t: ENTER, h: FUNCTION}
   - BACKSPACE
+  IME_ALT:
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: '&ime_toggle LANG2', h: SYSTEM}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
   MOUSE:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -311,16 +355,16 @@ layers:
 combos:
 - p: [11, 12]
   k: TAB
-  l: [BASE, MOUSE]
+  l: [BASE, IME_ALT, MOUSE]
 - p: [12, 13]
   k: Sft+TAB
-  l: [BASE, MOUSE]
+  l: [BASE, IME_ALT, MOUSE]
 - p: [11, 10]
-  k: '&mouse_off 1'
-  l: [BASE, MOUSE]
+  k: '&mouse_off 2'
+  l: [BASE, IME_ALT, MOUSE]
 - p: [20, 21]
   k: '"'
-  l: [BASE, MOUSE]
+  l: [BASE, IME_ALT, MOUSE]
 - p: [24, 25]
   k: '='
-  l: [BASE, MOUSE]
+  l: [BASE, IME_ALT, MOUSE]
