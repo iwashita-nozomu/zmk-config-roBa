@@ -20,11 +20,12 @@
 | Enter (41) | タップでEnter | ホールド中はFUNCTION |
 | NAV、旧無変換 (39) | 文字・IME入力なし | 押した瞬間からNAV、離すと解除 |
 | Space (38) | タップでSpace | ホールド中はNUM |
-| 半角／全角切替、旧変換 (37) | タップでMOUSE解除＋Ctrl+Space | ホールド中はSYSTEM |
+| 半角／全角切替、旧変換 (37) | タップでMOUSE解除＋LANG1/LANG2を交互送信 | ホールド中はSYSTEM |
 | H左隣の `-` (16) | タップで `-` | ホールド中はSCROLL |
 
 左親指はSpaceを挟んで、左が半角／全角切替 (37)、右が専用NAV (39) です。
-**IME切替にはPC側のCtrl+Space設定が必要です。下記「半角／全角切替とホスト設定」を確認してください。**
+**Ctrl+Spaceは送信しません。補完用の設定を変更せず、LANG1/LANG2を交互に送ります。**
+送信順の状態とホストのIME状態の違いは、下記「半角／全角切替と送信順」を参照してください。
 
 IME・Space・Enter・通常の位置16はlayer-tapなのでタップ／ホールドの判定があります。
 NAVの位置39とMOUSE/NAV/FUNCTIONの位置16は、押した瞬間から有効になるmomentaryです。
@@ -65,11 +66,12 @@ SYSTEM中は管理操作が最優先で、位置16は通常の `-` です。
 
 ### キータップで文字入力へ戻る
 
-**左親指のIMEキー (37) をタップすると、MOUSEだけを解除してからCtrl+Spaceを1回送ります。**
-入力言語を変えずに戻るには、BASE/MOUSE中のA+Sを押します。A+SはMOUSE解除だけで、
-変換・無変換・Ctrl+Spaceなどのキー入力を送りません。
+**左親指のIMEキー (37) をタップすると、MOUSEを解除し、LANG1またはLANG2を1回送ります。**
+同時に次回の送信先を反転します。
+入力言語を変えずに戻るには、BASE/IME_ALT/MOUSE中のA+Sを押します。A+SはMOUSE解除だけで、
+キー入力を送らず、LANG1/LANG2の送信順も変更しません。
 MOUSEが既にOFFならOFFのままです。IMEキーのホールドはSYSTEMへの一時アクセスで、
-MOUSE解除とIME切替のタップ処理は実行しません。専用NAV (39) はIME入力を送りません。
+MOUSE解除・IME入力・送信順反転のタップ処理は実行しません。専用NAV (39) はIME入力を送りません。
 
 ZMK標準のoff-only layer behaviorとmacro/hold-tapの合成で実現しています。
 `&to 0`のように、同時に保持しているNUM/NAV/FUNCTION/SCROLLを消す処理ではありません。
@@ -79,7 +81,7 @@ SCROLLも離してください。再びボールを動かすと自動MOUSEに入
 
 任意の文字キー・クリックで自動解除する機能は追加していません。
 右親指Escは通常のEscのままです。解除キーでOSのIME状態を必ず変更できるという保証と、
-ファームウェア内のMOUSE解除は別です。ホスト設定の前提は下記を参照してください。
+ファームウェア内のMOUSE解除は別です。LANGキーの対応条件と送信順の制約は下記を参照してください。
 
 ### ターミナルでのCtrl+C/Vに注意
 
@@ -160,7 +162,7 @@ H左隣はFUNCTION中もmomentary SCROLLです。
 レイヤー番号の大きい方を優先します。
 
 ```text
-BASE(0) < MOUSE(1) < NUM(2) < NAV(3) < FUNCTION(4) < SCROLL(5) < SYSTEM(6)
+BASE(0) < IME_ALT(1) < MOUSE(2) < NUM(3) < NAV(4) < FUNCTION(5) < SCROLL(6) < SYSTEM(7)
 ```
 
 自動MOUSEより手動のNUM/NAV/FUNCTIONを優先します。
@@ -175,41 +177,60 @@ SYSTEMの `/` (33) の `BT_CLR` とY〜Pのプロファイル選択は維持し�
 右下は管理層でも通常はBackspaceで、FUNCTIONを同時に保持した場合だけDeleteです。
 
 既存コンボ（S+D=Tab、D+F=Shift+Tab、A+S=MOUSE解除のみ、L+`'`=`"`、C+V=`=`）は
-BASE/MOUSEに限ります。コンボのlayers判定は最上位有効レイヤーを用いるため、
+BASE/IME_ALT/MOUSEに限ります。コンボのlayers判定は最上位有効レイヤーを用いるため、
 NAV/FUNCTION/NUM/SCROLL/SYSTEMでは発動しません。矢印やFキーを奪う旧グローバル設定は撤去しました。
 IMEタップとA+SのMOUSE解除は維持します。変換／無変換の送信と旧 `&to 0` の全層リセットは残しません。
 
-## 半角／全角切替とホスト設定
+## 半角／全角切替と送信順
 
-**IME操作は左親指の1キー (37) に統合しました。**
-タップでMOUSEを解除し、`IME_TOGGLE = LC(SPACE)` を1回送ります。
-ホールドは従来のSYSTEMアクセスを維持します。旧無変換 (39) は専用NAVです。
-これは「変換」キーではなく、以下のPC設定と組み合わせて半角英数／日本語入力を切り替える操作です。
-`LANG1` / `LANG2` を交互に送る状態機械や、OS・IME状態の自動推測はありません。
+**左親指の1キー (37) のタップごとに、LANG1 → LANG2 → LANG1 → … と送信します。**
+LANG1はWindowsのImeOn／Macのかな、LANG2はWindowsのImeOff／Macの英数です。
+Ctrl+SpaceやLANG5は使わず、補完用ショートカットの設定変更も不要です。
+Windowsは対応バージョンの日本語Microsoft IME、Macは日本語入力でのLANGキー対応を前提とします。
+別のIMEやキー再割り当てツールによる挙動は、そのホスト上で確認してください。
 
-### Windows 11 / Microsoft IME
+### 1ビットの実装
 
-通知領域の「あ」または「A」を右クリックし、「設定」→「キーとタッチのカスタマイズ」を開きます。
-「キーの割り当て」をオンにし、**Ctrl+Spaceを「IME-オン/オフ」へ変更**してください。
-既定は「なし」なので、未設定のPCではこのキーだけで切り替わるとは限りません。
-日本語のMicrosoft IMEを選択して使用します。別のIMEでは、そのIMEの設定で同じショートカットを割り当てます。
+`IME_ALT` の有効／無効だけを送信順の1ビットに使います。
 
-### macOS / 日本語入力
+| タップ直前のIME_ALT | 送るキー | タップ後 |
+| --- | --- | --- |
+| OFF（再起動時の初期状態） | LANG1 | ON |
+| ON | LANG2 | OFF |
 
-「システム設定」→「キーボード」→「キーボードショートカット」→「入力ソース」で、
-**Control+Spaceが「前の入力ソースを選択」**に割り当てられていることを確認してください。
-英数と日本語の2入力ソースで使うと、同じタップで両者を行き来できます。
-入力ソースが3種類以上なら直前のソースへの切替であり、常に日英だけを切り替える保証はありません。
+BASEの位置37は `&lt_ime L_SYSTEM LANG1`、IME_ALTの同位置は
+`&lt_ime L_SYSTEM LANG2` です。共通マクロがMOUSEをOFFにし、IME_ALTだけを
+反転し、渡されたLANGキーを1回タップします。SYSTEMホールド時はこのマクロを実行しません。
+標準のmacro・hold-tap・layer toggleの合成だけで、新しいC behaviorはありません。
 
-このPRはPC設定を変更しません。**実機と各ホスト設定は未検証**です。
-余分な修飾キーを離し、エディタの空バッファで「英数→日本語→英数」の2タップ、
-SYSTEMホールドでは切替が起きないこと、NAV保持／解除ではIMEが変わらないことを確認してください。
-ホスト側がCtrl+Spaceを処理しない場合はアプリへ渡るため、シェル上で最初の確認をしないでください。
-US/JISの配列認識はこのショートカットとは独立です。記号の定義は変更していません。
+IME_ALTの残り42キーは透過、sensor bindingも追加しません。
+MOUSEより下位に置くため、IME_ALTが有効でもクリック、スクロール、NAV、FUNCTION、
+記号の実効bindingは変わりません。既存コンボもIME_ALTを有効対象に含めています。
+MOUSEのタイムアウトやA+SはIME_ALTを変更せず、NAV/FUNCTION等の解放もこのビットを消しません。
 
-根拠: [MicrosoftのCtrl+Space設定説明](https://blogs.windows.com/windows-insider/2019/07/31/announcing-windows-10-insider-preview-build-18950/)、
-[Windows 11のキー割り当て手順（NEC）](https://faq.nec-lavie.jp/fa/qa/web/knowledge24916.html)、
-[Appleの入力ソース切替](https://support.apple.com/ja-jp/guide/japanese-input-method/jpimf6ffb247/mac)。
+### 状態の限界と実機確認
+
+**記憶するのはroBaの送信順であり、PCの現在のIME状態ではありません。**
+再起動後の初回はLANG1で、起動時にLANGキーを自動送信することはありません。
+別のキーボードや画面操作でIMEを変えた場合、アプリごとに入力モードが違う場合、
+または接続先を切り替えた場合、最初のタップが既に有効なモードを指定することがあります。
+そのキーがホストに受理されれば以後は交互です。状態は全接続先で共有し、再起動時に初期化します。
+接続先別の永続化・OS自動判定・ホスト状態同期は追加しません。
+
+レイヤー番号を1段ずらしているため、ZMK Studioに保存済みのkeymapがある場合は
+そのまま混在させないでください。必要な設定を控え、ビルドしたstock keymapとの一致を確認します。
+ペアリングまで消すsettings_resetをこの確認のために自動実行することはありません。
+
+実機では余分な修飾を離し、空のエディタで同じキーを4回タップして
+日本語／英数の交互指定、SYSTEMホールドで送信順が進まないこと、
+NAV保持／解除とA+SがIME入力を送らないことを確認します。
+HIDログ上のLANG1/LANG2交互送信と、画面の実際の入力モードは分けて確認してください。
+**実機での送信・IME切替は未検証**です。US/JIS記号配列認識も独立の条件です。
+
+根拠: [MicrosoftのImeOn/ImeOff HID対応](https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/keyboard-japan-ime)、
+[ZMKのLANGキーとmacOS対応](https://zmk.dev/docs/keymaps/list-of-keycodes#language)、
+[ZMKレイヤー](https://zmk.dev/docs/keymaps/behaviors/layers)、
+[ZMKマクロ](https://zmk.dev/docs/keymaps/behaviors/macros)。
 
 MOUSEのY/PはCtrl+C/Vのままで、macOS向けCommand+C/Vへの自動切替はしません。
 Ctrl/Command差の自動吸収、修飾キー再配置は今回の変更には含めません。
@@ -222,8 +243,8 @@ Ctrl/Command差の自動吸収、修飾キー再配置は今回の変更には�
 python3 -m unittest discover -s tests -v
 ```
 
-keymap内のマクロだけを展開し、43bindings、位置、優先順位、全64通りのレイヤー集合での
-新規押下の参照先、IMEの1キー化・専用NAV、コンボ対象範囲、MOUSE解除の合成、記号配置を検査します。
+keymap内のマクロだけを展開し、43bindings、位置、優先順位、全128通りのレイヤー集合での
+新規押下の参照先、LANG1/LANG2の交互送信・専用NAV、コンボ対象範囲、MOUSE解除の合成、記号配置を検査します。
 **ZMKヘッダはこの構造検査では読みません。ファームウェアのコンパイル、Devicetree binding検証、
 hold-tapの時間判定、HIDイベント、実機動作を検証するテストではありません。**
 

@@ -5,16 +5,14 @@
 
 // Keep these numbers in the same order as the layer nodes below.
 // Manual layers override automouse; SCROLL must be the highest pointing layer.
-#define L_BASE   0
-#define L_MOUSE  1
-#define L_NUM    2
-#define L_NAV    3
-#define L_FN     4
-#define L_SCROLL 5
-#define L_SYSTEM 6
-
-// Shared IME toggle chord. Windows requires Ctrl+Space -> IME on/off; see README.
-#define IME_TOGGLE LC(SPACE)
+#define L_BASE    0
+#define L_IME_ALT 1
+#define L_MOUSE   2
+#define L_NUM     3
+#define L_NAV     4
+#define L_FN      5
+#define L_SCROLL  6
+#define L_SYSTEM  7
 
 // SCROLL must not depend on MOUSE remaining active after its timeout.
 #define MOUSE_TOP_ROW &kp LC(C) &mkp MB1 &mkp MB3 &mkp MB2 &kp LC(V)
@@ -36,31 +34,31 @@
         tab {
             bindings = <&kp TAB>;
             key-positions = <11 12>;
-            layers = <L_BASE L_MOUSE>;
+            layers = <L_BASE L_IME_ALT L_MOUSE>;
         };
 
         shift_tab {
             bindings = <&kp LS(TAB)>;
             key-positions = <12 13>;
-            layers = <L_BASE L_MOUSE>;
+            layers = <L_BASE L_IME_ALT L_MOUSE>;
         };
 
         exit_mouse {
             bindings = <&mouse_off L_MOUSE>;
             key-positions = <11 10>;
-            layers = <L_BASE L_MOUSE>;
+            layers = <L_BASE L_IME_ALT L_MOUSE>;
         };
 
         double_quotation {
             bindings = <&kp DOUBLE_QUOTES>;
             key-positions = <20 21>;
-            layers = <L_BASE L_MOUSE>;
+            layers = <L_BASE L_IME_ALT L_MOUSE>;
         };
 
         eq {
             bindings = <&kp EQUAL>;
             key-positions = <24 25>;
-            layers = <L_BASE L_MOUSE>;
+            layers = <L_BASE L_IME_ALT L_MOUSE>;
         };
     };
 
@@ -71,22 +69,22 @@
             toggle-mode = "off";
         };
 
-        lt_mouse_exit: lt_mouse_exit {
+        lt_ime: lt_ime {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "tap-preferred";
             tapping-term-ms = <200>;
-            bindings = <&mo>, <&exit_mouse_key>;
+            bindings = <&mo>, <&ime_toggle>;
         };
     };
 
     macros {
-        // Exit MOUSE, then tap the host chord once; do not track the host IME state.
-        exit_mouse_key: exit_mouse_key {
+        // Flip only the local send-order bit, not the host IME state.
+        ime_toggle: ime_toggle {
             compatible = "zmk,behavior-macro-one-param";
             #binding-cells = <1>;
             wait-ms = <0>;
-            bindings = <&macro_press &mouse_off L_MOUSE
+            bindings = <&macro_press &mouse_off L_MOUSE &tog L_IME_ALT
                         &macro_tap &macro_param_1to1 &kp MACRO_PLACEHOLDER>;
         };
     };
@@ -101,10 +99,21 @@
 &kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &kp U  &kp I      &kp O    &kp P
 &kp A             &kp S         &kp D         &kp F                   &kp G        &kp LS(LG(S))    &lt L_SCROLL MINUS  &kp H        &kp J  &kp K      &kp L    &kp SQT
 &mt LEFT_SHIFT Z  &kp X         &kp C         &kp V                   &kp B        &kp COLON        &kp SEMICOLON       &kp N        &kp M  &kp COMMA  &kp DOT  &kp SLASH
-&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &lt_mouse_exit L_SYSTEM IME_TOGGLE  &lt L_NUM SPACE  &mo L_NAV  &kp ESCAPE  &lt L_FN ENTER                     &kp BACKSPACE
+&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &lt_ime L_SYSTEM LANG1  &lt L_NUM SPACE  &mo L_NAV  &kp ESCAPE  &lt L_FN ENTER                     &kp BACKSPACE
             >;
 
             sensor-bindings = <&inc_dec_kp PG_UP PAGE_DOWN>;
+        };
+
+        // One send-order bit: off -> LANG1, on -> LANG2. Starts off at boot.
+        // All other keys/sensors inherit; keep this below every operation layer.
+        IME_ALT {
+            bindings = <
+&trans  &trans  &trans  &trans  &trans                              &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &lt_ime L_SYSTEM LANG2  &trans  &trans      &trans  &trans                  &trans
+            >;
         };
 
         MOUSE {
