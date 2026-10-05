@@ -135,9 +135,9 @@
         };
 
         NAV {
-            // Explicit letters mask the automouse actions while navigating.
+            // Unused Y/U/I/O/P positions block both letters and lower-layer actions.
             bindings = <
-&kp ESCAPE      &kp LC(LS(TAB))         &trans  &kp LC(TAB)              &trans                                  &kp Y           &kp U           &kp I         &kp O            &kp P
+&kp ESCAPE      &kp LC(LS(TAB))         &trans  &kp LC(TAB)              &trans                                  &none           &none           &none         &none            &none
 &kp HOME        &trans                  &trans  &trans                  &kp END  &trans      &mo L_SCROLL  &kp LEFT_ARROW  &kp DOWN_ARROW  &kp UP_ARROW  &kp RIGHT_ARROW  &kp SQT
 &kp LEFT_SHIFT  &kp LG(LS(LEFT_ARROW))  &trans  &kp LG(LS(RIGHT_ARROW))  &trans   &trans      &trans        &trans          &trans          &trans        &trans           &trans
 &trans          &trans                  &trans  &trans                  &trans   &trans      &trans        &trans                                                           &trans

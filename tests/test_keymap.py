@@ -138,12 +138,24 @@ class KeymapTests(unittest.TestCase):
         for layer in ("MOUSE", "NAV", "FUNCTION"):
             self.assertEqual(LAYERS[layer][16], "&mo 6")
 
-    def test_nav_uses_hjkl_and_masks_automouse(self):
+    def test_nav_uses_hjkl_and_disables_top_row(self):
+        self.assertEqual(LAYERS["NAV"][5:10], ["&none"] * 5)
         self.assertEqual(LAYERS["NAV"][17:21], ARROWS)
-        for mouse in (False, True):
-            active = {"BASE", "NAV"} | ({"MOUSE"} if mouse else set())
-            self.assertEqual([resolve(active, p) for p in range(5, 10)], LETTERS)
-            self.assertEqual([resolve(active, p) for p in range(17, 21)], ARROWS)
+        for flags in itertools.product((False, True), repeat=3):
+            underlying = {"BASE"} | {
+                name for name, flag in zip(("IME_ALT", "MOUSE", "NUM"), flags) if flag
+            }
+            active = underlying | {"NAV"}
+            with self.subTest(active=sorted(active)):
+                self.assertEqual([resolve(active, p) for p in range(5, 10)], ["&none"] * 5)
+                self.assertEqual([resolve(active, p) for p in range(17, 21)], ARROWS)
+                # Releasing NAV restores the still-active lower layer for new presses.
+                if "NUM" in underlying:
+                    expected = ["&kp " + key for key in (
+                        "CARET", "AMPERSAND", "TILDE", "LEFT_PARENTHESIS", "RIGHT_PARENTHESIS")]
+                else:
+                    expected = MOUSE_KEYS if "MOUSE" in underlying else LETTERS
+                self.assertEqual([resolve(active - {"NAV"}, p) for p in range(5, 10)], expected)
         for position in (2, 11, 12, 13):
             self.assertEqual(LAYERS["NAV"][position], "&trans")
 
@@ -171,7 +183,7 @@ class KeymapTests(unittest.TestCase):
                 elif "FUNCTION" in active:
                     expected_top = [f"&kp F{i}" for i in range(1, 6)]
                 elif "NAV" in active:
-                    expected_top = LETTERS
+                    expected_top = ["&none"] * 5
                 elif "NUM" in active:
                     expected_top = ["&kp " + key for key in (
                         "CARET", "AMPERSAND", "TILDE", "LEFT_PARENTHESIS", "RIGHT_PARENTHESIS")]

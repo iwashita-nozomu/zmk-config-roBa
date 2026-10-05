@@ -42,7 +42,10 @@ Z/ShiftとNUMの0/Shiftは従来のままです。H/Iは通常の文字キーで
 入口は `&mo L_NAV` なので長押し判定を待たず、離すとNAVだけが解除されます。
 旧E/S/D/Fの矢印割り当ては外しました。左側のHome/End、Ctrl+Tab、
 Ctrl+Shift+Tab、GUI+Shift+左右矢印、エンコーダーのCtrl+PageUp/PageDownは維持します。
-NAVのY/U/I/O/Pは明示的な文字入力で、自動MOUSEが残っていてもコピー／クリックに化けません。
+NAVのY/U/I/O/Pは `&none` で無効化し、文字も下位MOUSEのコピー／クリックも送りません。
+`&trans` ではないため、下位NUMの記号にも流れません。NAVを離すと、その時点で残っている
+BASE/NUM/MOUSEなどの割り当てに戻ります。別途保持した上位FUNCTION/SCROLL/SYSTEMの
+優先順位は変えません。
 
 ## MOUSE / SCROLL
 
