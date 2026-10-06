@@ -1,6 +1,9 @@
 # zmk-config-roBa
 
-<img src="keymap-drawer/roBa.svg" alt="roBa keymap">
+[![現在のroBaキーマップ](keymap-drawer/roBa.svg)](keymap-drawer/roBa.svg)
+
+[配置図を直接開く](keymap-drawer/roBa.svg) · [生成された配置データ](keymap-drawer/roBa.yaml)
+画像・本文・keymapは、閲覧中の同じブランチの内容です。
 
 `iwashita-nozomu/zmk-config-roBa` の個人用配置です。**ホストの配列はJIS（日本語）を前提**とします。
 配置の正本は [config/roBa.keymap](config/roBa.keymap)、変更理由・検証結果は
@@ -14,9 +17,9 @@ PR公開やビルド成功は実機への適用とは別です。書き込み後
 
 | 位置 | タップ／通常操作 | 保持中 |
 | --- | --- | --- |
-| 左親指、Space左 (37) | MOUSE解除＋LANG1/LANG2を交互に1回送信 | 設定レイヤーとの兼用なし |
+| 左親指、Space左 (37) | IME切替＋MOUSE解除 | Shift |
 | Space (38) | Space | NUM |
-| 左親指、Space右 (39) | 文字・IME入力なし | 押下時からNAV、離すと解除 |
+| 左親指、Space右 (39) | Tab | NAV、離すと解除 |
 | 右親指Esc (40) | Esc | SYSTEM |
 | 右親指Enter (41) | Enter | FUNCTION |
 | 右下 (42) | Backspace | FUNCTION中だけDelete |
@@ -25,16 +28,31 @@ PR公開やビルド成功は実機への適用とは別です。書き込み後
 | H左隣の `-` (16) | 普通の `-` | スクロール兼用を撤去 |
 
 **マウス操作中はN＝スクロール、M＝低速を横並びで使います。**
-通常NとSpace/Esc/Enterは標準layer-tapの判定が入り、タップは文字、ホールドは対象レイヤーです。
-MOUSE/SCROLL/SLOWのN/Mと専用NAVは `&mo` なので、押下時に有効、解放時に解除します。
-左親指IMEは押下ごとにマクロを1回実行し、保持してもSYSTEMには入りません。
+通常NとSpace/Tab/Esc/Enterは標準layer-tapの判定が入り、タップはキー入力、ホールドは対象レイヤーです。
+MOUSE/SCROLL/SLOWのN/Mは `&mo` なので、押下時に有効、解放時に解除します。
+左親指IMEはタップでIME切替、ホールドでShiftです。SYSTEMには入りません。
 
 保持解除はそのレイヤーだけを外し、ほかの保持状態やIME送信順をリセットしません。
 解放後の**新しい押下**が残ったレイヤーで解決されます。既に押下中のキーを途中で別のHIDキーに
 変換する動作ではありません。通常Nを押しっぱなしにして文字Nを反復する操作はSCROLLになります。
 
-Ctrl・GUI (Win/Command)・Altの専用キー、Z/ShiftとNUMの0/Shiftは維持しています。
-H/Iは普通の文字キーです。削除コンボは追加していません。
+Ctrl・GUI (Win/Command)・Altの専用キーは維持しています。
+Z/H/Iは普通の文字キーです。削除コンボは追加していません。
+
+### ShiftとZ
+
+**左親指IMEキー(37)を押しながら通常のZ(22)を押すとShift+Z**です。
+Zは `&kp Z` であり、保持してもShiftへ変わらず通常のキーリピートを使えます。
+IME/ShiftはZMK標準hold-tapの合成で、200ms保持、または保持中に別キーを押すとShiftになります
+（`hold-preferred`）。Shift保持・解放ではLANG送信、IME送信順反転、MOUSE解除を行いません。
+IMEを切り替えるときは、単独で短くタップして離してから文字を入力します。
+
+NUM中はZ位置の「0/Shift」、NAV中はZ位置の専用Shiftを維持しています。
+NUM/NAV用の親指キーとIME/Shiftの親指キーを同時に押す必要はありません。
+範囲選択はTab/NAVをホールドしてからZ位置のShiftとHJKLを使います。
+Shift+Tabには既存のD+Fコンボも使えます。
+
+根拠: [ZMK Hold-Tap](https://zmk.dev/docs/keymaps/behaviors/hold-tap)。
 
 ## MOUSE / SCROLL / SLOW
 
@@ -81,7 +99,8 @@ NUMのN/Mは角括弧、FUNCTIONのN/MはF11/F12が優先し、文字・記号�
 
 ### キータップで文字入力へ戻る
 
-左親指IME (37) はMOUSE解除＋LANG入力、A＋SはMOUSE解除だけです。
+左親指IME (37) のタップはMOUSE解除＋LANG入力、A＋SはMOUSE解除だけです。
+同キーのShiftホールドやTab/NAV操作ではMOUSEを解除しません。
 A＋SはBASE/IME_ALT/MOUSE/SLOWで使用でき、入力言語やLANG送信順を変えません。
 MOUSEが既にOFFならOFFのままです。SCROLL/SLOWを保持中ならその状態は残るため、
 文字入力へ戻るときはN/Mも離します。再びボールを動かすと自動MOUSEへ入ります。
@@ -101,7 +120,11 @@ WezTerm標準のクリップボード操作はCtrl+Shift+C/V（macOSではComman
 
 ## NAV / FUNCTION
 
-左親指NAV (39) を保持中、H/J/K/Lが左/下/上/右です。
+**左親指のSpace右(39)は、タップでTab、ホールド中だけNAVです。**
+Space/NUM(38)は変更していません。NAV入口は `&lt L_NAV TAB` で、標準layer-tapの
+200ms・tap-preferred判定を使います。即時の `&mo` ではないため、矢印操作はホールド判定後に行います。
+保持が成立した後は離してもTabを送らず、NAVだけを解除します。
+NAV中のH/J/K/Lは左/下/上/右です。
 Y/U/I/O/Pは `&none` で、文字も下位MOUSE/NUMの操作も送りません。
 Home/End、Ctrl+Tab、Ctrl+Shift+Tab、GUI+Shift+左右矢印、エンコーダーのCtrl+PageUp/PageDownは維持。
 NAVを離すと残ったレイヤーの割り当てへ戻ります。
@@ -127,7 +150,7 @@ SCROLLを別途保持している間は、UIOとN/Mのポインティング操�
 ## SYSTEM：右手に集約
 
 **右親指Esc (40) はタップEsc、ホールド中だけSYSTEMです。**
-左親指IMEのSYSTEM兼用と専用hold-tap定義を撤去しました。設定への入口を含め右手側に集約しています。
+左親指IMEはShiftとの兼用で、SYSTEMには入りません。設定への入口を含め右手側に集約しています。
 
 | SYSTEM中の右手位置 | 動作 |
 | --- | --- |
@@ -193,7 +216,7 @@ Shiftを追加してもダブルクォートにはなりません。ダブルク
 ZMK標準の記号名はUSのHID位置が基準なので、JISで異なるものだけをkeymap冒頭の
 `JP_*` にまとめています。BASE/NUM/NAVと記号コンボはこの別名を参照します。
 バックスラッシュは円キーではなく `INT_RO`、パイプはShift+`INT_YEN`を使います。
-新しいbehavior、実行時のOS判定、Shift反転処理は追加せず、ホストの通常のShift処理を使います。
+記号用の新しいbehavior、実行時のOS判定、Shift反転処理は追加せず、ホストの通常のShift処理を使います。
 
 NUMはMOUSE/SLOWより上なので、括弧はクリックや低速に化けません。
 **IMEの日本語ON/OFFとJIS配列認識は別条件です。** Windows/macOSともroBaをJISとして
@@ -218,18 +241,20 @@ std::vector<int> v; f(x[i], {a, b});
 
 ## LANG交互送信とレイヤー順序
 
-左親指IME (37) は押下ごとにLANG1 → LANG2 → LANG1 → … を送ります。初回はLANG1です。
+左親指IME (37) はタップごとにLANG1 → LANG2 → LANG1 → … を送ります。初回はLANG1です。
+ShiftホールドではLANGを送らず、送信順も変更しません。
 Windowsの対応する日本語Microsoft IMEでLANG1=ImeOn、LANG2=ImeOff、Mac日本語入力でかな／英数です。
 Ctrl+Spaceは補完用なので送らず、LANG5や旧変換／無変換も送りません。別IMEや再割り当てツールは実機確認が必要です。
 
-BASEの37は `&ime_toggle LANG1`、IME_ALTの37は `&ime_toggle LANG2`。
-共通マクロがMOUSEだけをOFFにし、IME_ALTの送信順ビットを反転し、渡されたLANGを1回送ります。
+BASEの37は `&ime_shift LEFT_SHIFT LANG1`、IME_ALTの37は `&ime_shift LEFT_SHIFT LANG2`。
+ホールドは `&kp LEFT_SHIFT`、タップだけが既存の `&ime_toggle` マクロを呼びます。
+そのマクロがMOUSEだけをOFFにし、IME_ALTの送信順ビットを反転し、渡されたLANGを1回送ります。
 IME_ALTの残り42位置とsensorは透過です。独自Cコード・OS検出・永続化は追加していません。
 
 **覚えるのはroBaの送信順であり、PCの現在のIME状態ではありません。**
 他の入力機器や画面操作、アプリごとの状態、接続先変更、再起動後には、既に有効なモードを
 再指定する場合があります。全接続先共通の状態で、再起動で初期化します。起動時にLANGは送信しません。
-実機では同じキーを4回押して往復を確認し、EscのSYSTEMホールドとNAV/A＋SではLANGが出ないことを確認します。
+実機では同じキーを4回タップして往復を確認し、IME/Shiftホールド、EscのSYSTEMホールド、Tab/NAV、A＋SではLANGが出ないことを確認します。
 
 ```text
 BASE0 < IME_ALT1 < MOUSE2 < SLOW3 < NUM4 < NAV5 < FUNCTION6 < SCROLL7 < SYSTEM8
@@ -247,6 +272,20 @@ NUM/NAV/FUNCTION/SCROLL/SYSTEMでは発動しないため、記号や移動/Fキ
 [ZMK LANGキー](https://zmk.dev/docs/keymaps/list-of-keycodes#language)、
 [レイヤー](https://zmk.dev/docs/keymaps/behaviors/layers)、[マクロ](https://zmk.dev/docs/keymaps/behaviors/macros)。
 
+## ファームウェア更新時に書き込む側
+
+**キー割り当てだけの変更は、通常は右手の `roBa_R-seeeduino_xiao_ble-zmk.uf2` だけを書き込めば反映されます。**
+このroBaでは [Kconfig.defconfig](boards/shields/roBa/Kconfig.defconfig) が右側を
+`ZMK_SPLIT_ROLE_CENTRAL=y` にしており、左手のキーも右側でキーマップ処理します。
+左親指のTabやShiftの変更だから左側だけを更新する、という意味ではありません。
+
+初回導入、左右通信仕様やZMKバージョンを変える更新、左右それぞれのハードウェア設定変更では
+左右に対応したファームウェアを更新してください。キー割り当ての変更とは区別します。
+通常更新に `settings_reset` は使いません。ZMK Studioの保存済み配置がある場合は、
+ビルドしたstock keymapと実際の割り当てを照合してください。
+
+根拠: [ZMK Split Keyboards](https://zmk.dev/docs/features/split-keyboards#building-and-flashing-firmware)。
+
 ## 検証と描画
 
 既存の構造回帰はPython 3と `cpp` で実行します。
@@ -256,7 +295,7 @@ python3 -m unittest discover -s tests -v
 python3 -m compileall -q tests
 ```
 
-9層×43位置、全256層集合、LANG送信順、NAVの無入力、N/Mの組合せと解放順、MOUSEタイムアウト時の
+9層×43位置、全256層集合、IME/Shiftの分離、通常ZとTab/NAV、LANG送信順、NAV上段の無入力、N/Mの組合せと解放順、MOUSEタイムアウト時の
 参照先、XY/scroll scaler設定、設定操作の右手集約、JISの専用記号・Shift組合せの送信コード・記号コンボ・Fキーを検査します。
 **これはkeymap内マクロを展開する静的モデルであり、ZMKヘッダ・実HID・タイマー・ホストの出力・
 物理的な操作感を検証するものではありません。** 実機の速度・スクロール量・連打・解放順は未検証です。

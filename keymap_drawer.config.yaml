@@ -2,6 +2,8 @@
 # raw_binding_map keys are preprocessed with config/roBa.keymap; no keycode copy.
 parse_config:
   raw_binding_map:
+    "&ime_toggle LANG1": "IME ON"
+    "&ime_toggle LANG2": "IME OFF"
     "&kp JP_SQT": "'"
     "&kp JP_DOUBLE_QUOTES": "\""
     "&kp JP_COLON": {"t": ":", "s": "*"}

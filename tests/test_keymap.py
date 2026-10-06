@@ -55,8 +55,8 @@ class KeymapTests(unittest.TestCase):
         expected = {
             7: "&kp I", 16: "&kp MINUS", 17: "&kp H",
             29: "&lt 7 N", 30: "&kp M",
-            37: "&ime_toggle LANG1", 38: "&lt 4 SPACE",
-            39: "&mo 5", 40: "&lt 8 ESCAPE",
+            37: "&ime_shift LEFT_SHIFT LANG1", 38: "&lt 4 SPACE",
+            39: "&lt 5 TAB", 40: "&lt 8 ESCAPE",
             41: "&lt 6 ENTER", 42: "&kp BACKSPACE",
         }
         for position, binding in expected.items():
@@ -67,14 +67,14 @@ class KeymapTests(unittest.TestCase):
         self.assertNotRegex(EXPANDED, r"INT_(?:HENKAN|MUHENKAN)|LC\(SPACE\)|LANG5\b")
         ime_positions = [
             (name, pos) for name, keys in LAYERS.items()
-            for pos, binding in enumerate(keys) if "&ime_toggle" in binding
+            for pos, binding in enumerate(keys) if "&ime_shift" in binding
         ]
         self.assertEqual(ime_positions, [("BASE", 37), ("IME_ALT", 37)])
-        self.assertEqual(LAYERS["IME_ALT"][37], "&ime_toggle LANG2")
-        self.assertEqual(LAYERS["BASE"][37], "&ime_toggle LANG1")
+        self.assertEqual(LAYERS["IME_ALT"][37], "&ime_shift LEFT_SHIFT LANG2")
+        self.assertEqual(LAYERS["BASE"][37], "&ime_shift LEFT_SHIFT LANG1")
         self.assertEqual(LAYERS["BASE"][38], "&lt 4 SPACE")
-        self.assertEqual(LAYERS["BASE"][39], "&mo 5")
-        # NAV sends no tap key, and does not use hold-tap to decide entry.
+        self.assertEqual(LAYERS["BASE"][39], "&lt 5 TAB")
+        # NAV now has a Tab tap; the retired SYSTEM/IME layer-tap stays absent.
         self.assertNotIn("lt_ime", EXPANDED)
 
     def test_thumb_ime_and_nav_survive_all_layer_combinations(self):
@@ -82,8 +82,8 @@ class KeymapTests(unittest.TestCase):
             active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
             with self.subTest(active=sorted(active)):
                 code = "LANG2" if "IME_ALT" in active else "LANG1"
-                self.assertEqual(resolve(active, 37), f"&ime_toggle {code}")
-                self.assertEqual(resolve(active, 39), "&mo 5")
+                self.assertEqual(resolve(active, 37), f"&ime_shift LEFT_SHIFT {code}")
+                self.assertEqual(resolve(active, 39), "&lt 5 TAB")
 
     def test_ime_bit_is_transparent_to_other_keys_and_sensors(self):
         self.assertEqual(
@@ -118,12 +118,42 @@ class KeymapTests(unittest.TestCase):
                 self.assertEqual(active - {"IME_ALT"}, manual)
                 self.assertEqual("IME_ALT" in active, initial ^ bool((count + 1) % 2))
 
-    def test_modifiers_are_preserved(self):
+    def test_thumb_shift_and_other_modifiers(self):
         self.assertEqual(LAYERS["BASE"][34:37], ["&kp LCTRL", "&kp LEFT_WIN", "&kp LEFT_ALT"])
-        self.assertEqual(LAYERS["BASE"][22], "&mt LEFT_SHIFT Z")
+        self.assertEqual(LAYERS["BASE"][22], "&kp Z")
+        self.assertEqual(LAYERS["NAV"][22], "&kp LEFT_SHIFT")
         self.assertEqual(LAYERS["NUM"][22], "&mt LEFT_SHIFT NUMBER_0")
         self.assertIn('flavor = "balanced";', SOURCE)
         self.assertIn("quick-tap-ms = <0>;", SOURCE)
+
+    def test_ime_shift_separates_hold_from_ime_tap(self):
+        behavior = re.search(r"(?s)ime_shift:\s*\w+\s*\{(.*?)\};", EXPANDED)[1]
+        self.assertIn('compatible = "zmk,behavior-hold-tap";', behavior)
+        self.assertIn('#binding-cells = <2>;', behavior)
+        self.assertIn('flavor = "hold-preferred";', behavior)
+        self.assertIn('tapping-term-ms = <200>;', behavior)
+        self.assertIn('quick-tap-ms = <0>;', behavior)
+        self.assertEqual(re.findall(r"&([a-z_]+)", behavior), ["kp", "ime_toggle"])
+        # These are distinct physical positions: Shift hold and an ordinary Z press.
+        # This checks configuration, not ZMK's hold-tap timer or real HID reports.
+        for flags in itertools.product((False, True), repeat=len(LAYER_NAMES) - 1):
+            active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
+            code = "LANG2" if "IME_ALT" in active else "LANG1"
+            self.assertEqual(resolve(active, 37), f"&ime_shift LEFT_SHIFT {code}")
+            expected = "&kp LEFT_SHIFT" if "NAV" in active else (
+                "&mt LEFT_SHIFT NUMBER_0" if "NUM" in active else "&kp Z")
+            self.assertEqual(resolve(active, 22), expected)
+        self.assertNotIn("&mt LEFT_SHIFT Z", EXPANDED)
+
+    def test_nav_tab_keeps_space_num_and_momentary_hold(self):
+        self.assertIn("&lt L_NAV TAB", SOURCE)
+        self.assertNotIn("&mo L_NAV", SOURCE)
+        # Use the existing standard layer-tap; do not change other layer-tap timing.
+        self.assertNotRegex(SOURCE, r"&lt\s*\{")
+        for flags in itertools.product((False, True), repeat=len(LAYER_NAMES) - 1):
+            active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
+            self.assertEqual(resolve(active, 38), "&lt 4 SPACE")
+            self.assertEqual(resolve(active, 39), "&lt 5 TAB")
 
     def test_num_digits_use_shiftable_number_row_codes(self):
         positions = (22, 23, 24, 25, 11, 12, 13, 1, 2, 3)  # 0..9
@@ -232,9 +262,9 @@ class KeymapTests(unittest.TestCase):
         ))
         # One IME tap exits MOUSE; A+S exits without sending an IME key.
         self.assertEqual(
-            resolve({"BASE", "MOUSE"}, 37), "&ime_toggle LANG1"
+            resolve({"BASE", "MOUSE"}, 37), "&ime_shift LEFT_SHIFT LANG1"
         )
-        self.assertEqual(resolve({"BASE", "MOUSE"}, 39), "&mo 5")
+        self.assertEqual(resolve({"BASE", "MOUSE"}, 39), "&lt 5 TAB")
         self.assertEqual(resolve({"BASE", "MOUSE"}, 40), "&lt 8 ESCAPE")
 
     def test_mouse_exit_keeps_manual_layers_in_lookup_model(self):

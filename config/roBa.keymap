@@ -100,6 +100,16 @@
     };
 
     behaviors {
+        // A chord selects Shift; only a standalone tap changes IME/MOUSE state.
+        ime_shift: ime_shift {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "hold-preferred";
+            tapping-term-ms = <200>;
+            quick-tap-ms = <0>;
+            bindings = <&kp>, <&ime_toggle>;
+        };
+
         mouse_off: mouse_off {
             compatible = "zmk,behavior-toggle-layer";
             #binding-cells = <1>;
@@ -122,13 +132,13 @@
         compatible = "zmk,keymap";
 
         BASE {
-            // Left thumb: IME toggle / Space / momentary NAV.
-            // IME is single-purpose; SYSTEM access is on the right thumb Esc hold.
+            // Left thumb: IME/Shift, Space/NUM, Tab/NAV.
+            // Z is a normal key; SYSTEM remains on the right thumb Esc hold.
             bindings = <
 &kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &kp U  &kp I      &kp O    &kp P
 &kp A             &kp S         &kp D         &kp F                   &kp G        &kp LS(LG(S))    &kp MINUS  &kp H        &kp J  &kp K      &kp L    &kp JP_SQT
-&mt LEFT_SHIFT Z  &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &lt L_SCROLL N        &kp M  &kp COMMA  &kp DOT  &kp SLASH
-&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_toggle LANG1  &lt L_NUM SPACE  &mo L_NAV  &lt L_SYSTEM ESCAPE  &lt L_FN ENTER                     &kp BACKSPACE
+&kp Z            &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &lt L_SCROLL N        &kp M  &kp COMMA  &kp DOT  &kp SLASH
+&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_shift LEFT_SHIFT LANG1  &lt L_NUM SPACE  &lt L_NAV TAB  &lt L_SYSTEM ESCAPE  &lt L_FN ENTER                     &kp BACKSPACE
             >;
 
             sensor-bindings = <&inc_dec_kp PG_UP PAGE_DOWN>;
@@ -141,7 +151,7 @@
 &trans  &trans  &trans  &trans  &trans                              &trans  &trans  &trans  &trans  &trans
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &trans
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &ime_toggle LANG2  &trans  &trans      &trans  &trans                  &trans
+&trans  &trans  &trans  &ime_shift LEFT_SHIFT LANG2  &trans  &trans      &trans  &trans                  &trans
             >;
         };
 
