@@ -20,16 +20,17 @@ PR公開やビルド成功は実機への適用とは別です。書き込み後
 | 左親指、Space左 (37) | IME切替＋MOUSE解除 | Shift |
 | Space (38) | Space | NUM |
 | 左親指、Space右 (39) | Tab | NAV、離すと解除 |
-| 右親指Esc (40) | Esc | SYSTEM |
+| 右親指Backspace (40) | Backspace | FUNCTION中だけDelete |
 | 右親指Enter (41) | Enter | FUNCTION |
-| 右下 (42) | Backspace | FUNCTION中だけDelete |
+| 右下Esc (42) | Esc | SYSTEM |
 | N (29) | N | 通常層からはSCROLL |
-| M (30) | 通常層では普通のM | MOUSE/SCROLL/SLOW中だけ低速 |
+| P直下の引用符キー (21) | 通常層では `'` | MOUSE/SCROLL/SLOW中は低速 |
+| M (30) | 普通のM | 低速兼用なし |
 | H左隣の `-` (16) | 普通の `-` | スクロール兼用を撤去 |
 
-**マウス操作中はN＝スクロール、M＝低速を横並びで使います。**
+**マウス操作中はN＝スクロール、P直下の引用符キー(21)＝低速です。Mの低速割り当ては撤去しました。**
 通常NとSpace/Tab/Esc/Enterは標準layer-tapの判定が入り、タップはキー入力、ホールドは対象レイヤーです。
-MOUSE/SCROLL/SLOWのN/Mは `&mo` なので、押下時に有効、解放時に解除します。
+MOUSE/SCROLL/SLOWのNとP直下キーは `&mo` なので、押下時に有効、解放時に解除します。
 左親指IMEはタップでIME切替、ホールドでShiftです。SYSTEMには入りません。
 
 保持解除はそのレイヤーだけを外し、ほかの保持状態やIME送信順をリセットしません。
@@ -38,6 +39,8 @@ MOUSE/SCROLL/SLOWのN/Mは `&mo` なので、押下時に有効、解放時に�
 
 Ctrl・GUI (Win/Command)・Altの専用キーは維持しています。
 Z/H/Iは普通の文字キーです。削除コンボは追加していません。
+右親指のBackspaceはタップ／ホールド兼用にせず、押しっぱなしの連続削除を使えます。
+DeleteはEnterのFUNCTIONを保持して同じBackspace位置を押します。
 
 ### ShiftとZ
 
@@ -60,22 +63,23 @@ Shift+Tabには既存のD+Fコンボも使えます。
 | --- | --- |
 | Y / P | Ctrl+C / Ctrl+V |
 | U / I / O | 左／中／右クリック (MB1/MB3/MB2) |
-| **N / M** | **保持でSCROLL／保持でSLOW** |
+| **N / P直下の引用符キー(21)** | **保持でSCROLL／保持でSLOW** |
 
-ボールを動かすと自動MOUSEに入り、N/Mを即時の操作キーとして使えます。
-通常状態から直接スクロールする場合はNをホールドします。通常状態で先にMを押しても低速には
-入らず文字Mです。MOUSEに入ってからM、またはNホールドでSCROLLに入ってからMを押します。
+ボールを動かすと自動MOUSEに入り、NとP直下の引用符キーを即時の操作キーとして使えます。
+通常状態から直接スクロールする場合はNをホールドします。通常状態で先に引用符キーを押すと
+低速には入らずシングルクォートです。MOUSEに入ってから引用符キー、またはNホールドで
+SCROLLに入ってから引用符キーを押します。Mはマウス操作中も普通の文字キーへ戻しました。
 
 | 保持中 | ボールの動作 |
 | --- | --- |
 | なし | 通常カーソル移動 |
-| M | 低速カーソル移動 |
+| P直下の引用符キー | 低速カーソル移動 |
 | N | 通常スクロール |
-| N＋M | 低速スクロール |
+| N＋P直下の引用符キー | 低速スクロール |
 
-MOUSE中からN/Mをどちらの順で押しても組み合わせられます。
-両方保持した状態からMだけ離すと通常スクロール、Nだけ離すと低速カーソル移動へ戻ります。
-MOUSEがタイムアウトしても、保持中SCROLL/SLOWのUIOクリックやN/M入口は文字に落ちません。
+MOUSE中からNとP直下キーをどちらの順で押しても組み合わせられます。
+両方保持した状態からP直下キーだけ離すと通常スクロール、Nだけ離すと低速カーソル移動へ戻ります。
+MOUSEがタイムアウトしても、保持中SCROLL/SLOWのUIOクリックやN・P直下キーの入口は文字に落ちません。
 3つのレイヤーのbindingsは `POINTING_BINDINGS` を共有し、内容を二重管理しません。
 
 低速倍率は入力移動量の **1/4** です。`trackball_listener` のSLOW overrideでZMK標準の
@@ -86,7 +90,9 @@ XYと縦横ホイールそれぞれの端数を標準実装が保持します。
 既存PMW3610のSNIPEとSCROLLは排他的なので、SNIPEは使いません。
 SLOWをSCROLLより下位に置き、listenerはSLOWが**有効かどうか**で倍率を選びます。
 このためSCROLL中にも低速が効き、低速キーを押すことでスクロールがカーソル移動へ化けません。
-NUMのN/Mは角括弧、FUNCTIONのN/MはF11/F12が優先し、文字・記号・Fキーの操作を守ります。
+NUMのN/Mは角括弧、FUNCTIONのN/MはF11/F12を維持します。P直下キーもNUMでは%、
+NAVでは引用符、FUNCTIONではF10が優先します（別途SCROLLを保持した場合はポインティング優先）。
+L+引用符のダブルクォートコンボだけはBASE/IME_ALT限定とし、MOUSE/SLOWで低速ホールドを奪わないようにしています。
 
 倍率は画面上の速度の厳密な1/4を保証しません。OS加速やアプリのスクロール処理も影響します。
 スクロールは既存ドライバの整数ホイールイベントを縮小するため、同方向では概ね4イベントごとに
@@ -103,14 +109,14 @@ NUMのN/Mは角括弧、FUNCTIONのN/MはF11/F12が優先し、文字・記号�
 同キーのShiftホールドやTab/NAV操作ではMOUSEを解除しません。
 A＋SはBASE/IME_ALT/MOUSE/SLOWで使用でき、入力言語やLANG送信順を変えません。
 MOUSEが既にOFFならOFFのままです。SCROLL/SLOWを保持中ならその状態は残るため、
-文字入力へ戻るときはN/Mも離します。再びボールを動かすと自動MOUSEへ入ります。
+文字入力へ戻るときはNとP直下の低速キーも離します。再びボールを動かすと自動MOUSEへ入ります。
 任意の文字キー・クリックで自動解除する処理や、全層を消す `&to 0` はありません。
 
 ### ターミナルでのCtrl+C/V
 
 Y/Pは「ターミナルではマウスを使わない」という利用方針でCtrl+C/Vを維持します。
 生のCtrl+CがTTYへ届けば通常はSIGINTで前景ジョブを中断し、Ctrl+Vもzshの標準Emacs編集では
-quoted-insertで、貼り付けとは限りません。端末へ移った直後はA＋SでMOUSEを解除し、N/Mも離します。
+quoted-insertで、貼り付けとは限りません。端末へ移った直後はA＋SでMOUSEを解除し、NとP直下の低速キーも離します。
 WezTerm標準のクリップボード操作はCtrl+Shift+C/V（macOSではCommand+C/Vも）ですが、
 全GUIアプリへそのまま適用できるわけではありません。Ctrl/Commandの自動変換はしていません。
 
@@ -141,15 +147,18 @@ FUNCTION:   F6   F7   F8   F9  F10
 通常の位置:  N    M    ,    .    /
 FUNCTION:  F11  F12  F13   透過  透過
 
-右下 (42): Delete
+右親指Backspace (40): Delete
+右下 (42): Esc / 保持でSYSTEM
 ```
 
-Fnを離すと右下はBackspaceです。NUMを同時に保持していた場合、N/M/COMMAはNUMの括弧へ戻ります。
-SCROLLを別途保持している間は、UIOとN/Mのポインティング操作をFUNCTIONより優先します。
+Fnを離すと右親指(40)はBackspaceへ戻ります。NUMを同時に保持していた場合、N/M/COMMAはNUMの括弧へ戻ります。
+SCROLLを別途保持している間は、UIOとN・P直下キーのポインティング操作をFUNCTIONより優先します。
 
 ## SYSTEM：右手に集約
 
-**右親指Esc (40) はタップEsc、ホールド中だけSYSTEMです。**
+**右下Esc (42) はタップEsc、ホールド中だけSYSTEMです。**
+右親指(40)はBackspace専用へ交換し、FUNCTION中の同じ位置でDeleteを出します。
+Escと一緒にSYSTEM入口を右下へ移したため、Backspaceの長押しは設定操作になりません。
 左親指IMEはShiftとの兼用で、SYSTEMには入りません。設定への入口を含め右手側に集約しています。
 
 | SYSTEM中の右手位置 | 動作 |
@@ -211,7 +220,7 @@ NUMはSpaceホールド、NUM中のShiftはZ位置のホールドです。
 NUM+Iはチルダ、NUM+N左隣(28)はパイプ、NUM+H左隣(16)はアンダースコアです。
 **通常の右端引用符キー(21)はJISのShift+7によるシングルクォート**です。
 Shiftを追加してもダブルクォートにはなりません。ダブルクォートはNUM+Shift+2位置(C)、
-または既存のL+引用符コンボで出します。C+Vの等号コンボもJISのShift+MINUSへ変換済みです。
+またはBASE/IME_ALTでL+引用符コンボを使って出します。C+Vの等号コンボもJISのShift+MINUSへ変換済みです。
 
 ZMK標準の記号名はUSのHID位置が基準なので、JISで異なるものだけをkeymap冒頭の
 `JP_*` にまとめています。BASE/NUM/NAVと記号コンボはこの別名を参照します。
@@ -261,8 +270,9 @@ BASE0 < IME_ALT1 < MOUSE2 < SLOW3 < NUM4 < NAV5 < FUNCTION6 < SCROLL7 < SYSTEM8
 ```
 
 番号はkeymapの定義・レイヤー順・trackball・listenerで合わせています。
-SYSTEMを保持中は管理操作が最優先です。既存コンボ（S+D=Tab、D+F=Shift+Tab、A+S=MOUSE解除、
-L+SQT=ダブルクォート、C+V=等号）はBASE/IME_ALT/MOUSE/SLOWに限定します。
+SYSTEMを保持中は管理操作が最優先です。S+D=Tab、D+F=Shift+Tab、A+S=MOUSE解除、
+C+V=等号はBASE/IME_ALT/MOUSE/SLOWに限定します。L+引用符=ダブルクォートだけはBASE/IME_ALTに限定し、
+位置21の低速操作と競合させません。
 NUM/NAV/FUNCTION/SCROLL/SYSTEMでは発動しないため、記号や移動/Fキーを奪いません。
 
 レイヤー追加で番号が変わっています。ZMK Studioの保存済みkeymapをそのまま混在させず、
@@ -295,7 +305,7 @@ python3 -m unittest discover -s tests -v
 python3 -m compileall -q tests
 ```
 
-9層×43位置、全256層集合、IME/Shiftの分離、通常ZとTab/NAV、LANG送信順、NAV上段の無入力、N/Mの組合せと解放順、MOUSEタイムアウト時の
+9層×43位置、全256層集合、IME/Shiftの分離、通常ZとTab/NAV、LANG送信順、NAV上段の無入力、NとP直下キーの組合せと解放順、MOUSEタイムアウト時の
 参照先、XY/scroll scaler設定、設定操作の右手集約、JISの専用記号・Shift組合せの送信コード・記号コンボ・Fキーを検査します。
 **これはkeymap内マクロを展開する静的モデルであり、ZMKヘッダ・実HID・タイマー・ホストの出力・
 物理的な操作感を検証するものではありません。** 実機の速度・スクロール量・連打・解放順は未検証です。

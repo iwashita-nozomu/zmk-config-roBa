@@ -38,11 +38,11 @@
 #define L_SCROLL  7
 #define L_SYSTEM  8
 
-// Held SCROLL/SLOW must retain clicks and the N/M pair after MOUSE expires.
+// Held SCROLL/SLOW must retain clicks, N (scroll), and the key below P (slow) after MOUSE expires.
 #define POINTING_BINDINGS \
     &trans  &trans  &trans  &trans  &trans  &kp LC(C)  &mkp MB1  &mkp MB3  &mkp MB2  &kp LC(V) \
-    &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans \
-    &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo L_SCROLL  &mo L_SLOW  &trans  &trans  &trans \
+    &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo L_SLOW \
+    &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo L_SCROLL  &trans  &trans  &trans  &trans \
     &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
 
 &mt {
@@ -89,7 +89,8 @@
         double_quotation {
             bindings = <&kp JP_DOUBLE_QUOTES>;
             key-positions = <20 21>;
-            layers = <L_BASE L_IME_ALT L_MOUSE L_SLOW>;
+            // Position 21 is SLOW during pointing; do not capture that hold.
+            layers = <L_BASE L_IME_ALT>;
         };
 
         eq {
@@ -133,12 +134,12 @@
 
         BASE {
             // Left thumb: IME/Shift, Space/NUM, Tab/NAV.
-            // Z is a normal key; SYSTEM remains on the right thumb Esc hold.
+            // Right thumb: Backspace and Enter/FUNCTION; bottom-right: Esc/SYSTEM.
             bindings = <
 &kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &kp U  &kp I      &kp O    &kp P
 &kp A             &kp S         &kp D         &kp F                   &kp G        &kp LS(LG(S))    &kp MINUS  &kp H        &kp J  &kp K      &kp L    &kp JP_SQT
 &kp Z            &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &lt L_SCROLL N        &kp M  &kp COMMA  &kp DOT  &kp SLASH
-&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_shift LEFT_SHIFT LANG1  &lt L_NUM SPACE  &lt L_NAV TAB  &lt L_SYSTEM ESCAPE  &lt L_FN ENTER                     &kp BACKSPACE
+&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_shift LEFT_SHIFT LANG1  &lt L_NUM SPACE  &lt L_NAV TAB  &kp BACKSPACE  &lt L_FN ENTER                     &lt L_SYSTEM ESCAPE
             >;
 
             sensor-bindings = <&inc_dec_kp PG_UP PAGE_DOWN>;
@@ -191,7 +192,7 @@
 &trans  &trans  &trans  &trans  &trans                                  &kp F1   &kp F2   &kp F3   &kp F4  &kp F5
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &kp F6   &kp F7   &kp F8   &kp F9  &kp F10
 &trans  &trans  &trans  &trans  &trans  &trans      &trans        &kp F11  &kp F12  &kp F13  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans      &trans        &trans                               &kp DEL
+&trans  &trans  &trans  &trans  &trans  &trans      &kp DEL       &trans                               &trans
             >;
         };
 
