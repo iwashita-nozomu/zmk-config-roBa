@@ -1,0 +1,38 @@
+# Display JIS symbols, including native Shift pairs, through the existing drawer.
+# raw_binding_map keys are preprocessed with config/roBa.keymap; no keycode copy.
+parse_config:
+  raw_binding_map:
+    "&kp JP_SQT": "'"
+    "&kp JP_DOUBLE_QUOTES": "\""
+    "&kp JP_COLON": {"t": ":", "s": "*"}
+    "&kp JP_EQUAL": "="
+    "&kp JP_PLUS": "+"
+    "&kp JP_ASTERISK": "*"
+    "&kp JP_CARET": {"t": "^", "s": "~"}
+    "&kp JP_AMPERSAND": "&"
+    "&kp JP_TILDE": "~"
+    "&kp JP_AT_SIGN": {"t": "@", "s": "`"}
+    "&kp JP_LEFT_PARENTHESIS": "("
+    "&kp JP_RIGHT_PARENTHESIS": ")"
+    "&kp JP_LEFT_BRACKET": {"t": "[", "s": "{"}
+    "&kp JP_RIGHT_BRACKET": {"t": "]", "s": "}"}
+    "&kp JP_LEFT_BRACE": "{"
+    "&kp JP_RIGHT_BRACE": "}"
+    "&kp JP_UNDERSCORE": "_"
+    "&kp JP_BACKSLASH": {"t": "\\", "s": "_"}
+    "&kp JP_PIPE": "|"
+    "&kp MINUS": {"t": "-", "s": "="}
+    "&kp SEMICOLON": {"t": ";", "s": "+"}
+    "&kp SLASH": {"t": "/", "s": "?"}
+    "&kp COMMA": {"t": ",", "s": "<"}
+    "&kp DOT": {"t": ".", "s": ">"}
+    "&kp PERIOD": {"t": ".", "s": ">"}
+    "&kp NUMBER_1": {"t": "1", "s": "!"}
+    "&kp NUMBER_2": {"t": "2", "s": "\""}
+    "&kp NUMBER_3": {"t": "3", "s": "#"}
+    "&kp NUMBER_4": {"t": "4", "s": "$"}
+    "&kp NUMBER_5": {"t": "5", "s": "%"}
+    "&kp NUMBER_6": {"t": "6", "s": "&"}
+    "&kp NUMBER_7": {"t": "7", "s": "'"}
+    "&kp NUMBER_8": {"t": "8", "s": "("}
+    "&kp NUMBER_9": {"t": "9", "s": ")"}
