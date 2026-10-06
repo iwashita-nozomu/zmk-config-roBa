@@ -23,7 +23,7 @@ layers:
   - K
   - L
   - ''''
-  - {t: Z, h: LEFT SHIFT}
+  - Z
   - X
   - C
   - V
@@ -38,9 +38,9 @@ layers:
   - LCTRL
   - LEFT WIN
   - LEFT ALT
-  - '&ime_toggle LANG1'
+  - {t: IME ON, h: LEFT SHIFT}
   - {t: SPACE, h: NUM}
-  - NAV
+  - {t: TAB, h: NAV}
   - {t: ESCAPE, h: SYSTEM}
   - {t: ENTER, h: FUNCTION}
   - BACKSPACE
@@ -82,7 +82,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - '&ime_toggle LANG2'
+  - {t: IME OFF, h: LEFT SHIFT}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
