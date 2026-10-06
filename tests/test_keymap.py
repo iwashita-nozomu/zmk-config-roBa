@@ -166,7 +166,7 @@ class KeymapTests(unittest.TestCase):
                 # Releasing NAV restores the still-active lower layer for new presses.
                 if "NUM" in underlying:
                     expected = ["&kp " + key for key in (
-                        "CARET", "AMPERSAND", "TILDE", "LEFT_PARENTHESIS", "RIGHT_PARENTHESIS")]
+                        "EQUAL", "LS(NUMBER_6)", "LS(EQUAL)", "LS(NUMBER_8)", "LS(NUMBER_9)")]
                 else:
                     expected = MOUSE_KEYS if underlying & {"MOUSE", "SLOW"} else LETTERS
                 self.assertEqual([resolve(active - {"NAV"}, p) for p in range(5, 10)], expected)
@@ -200,7 +200,7 @@ class KeymapTests(unittest.TestCase):
                     expected_top = ["&none"] * 5
                 elif "NUM" in active:
                     expected_top = ["&kp " + key for key in (
-                        "CARET", "AMPERSAND", "TILDE", "LEFT_PARENTHESIS", "RIGHT_PARENTHESIS")]
+                        "EQUAL", "LS(NUMBER_6)", "LS(EQUAL)", "LS(NUMBER_8)", "LS(NUMBER_9)")]
                 else:
                     expected_top = MOUSE_KEYS if active & {"MOUSE", "SLOW"} else LETTERS
                 self.assertEqual([resolve(active, p) for p in range(5, 10)], expected_top)
@@ -252,11 +252,14 @@ class KeymapTests(unittest.TestCase):
         )
 
     def test_punctuation_and_brackets_survive_automouse(self):
-        base = {21: "SQT", 27: "COLON", 28: "SEMICOLON", 31: "COMMA", 32: "DOT", 33: "SLASH"}
+        base = {21: "LS(NUMBER_7)", 27: "SQT", 28: "SEMICOLON", 31: "COMMA", 32: "DOT", 33: "SLASH"}
         symbols = {
-            8: "LEFT_PARENTHESIS", 9: "RIGHT_PARENTHESIS", 16: "UNDERSCORE",
-            27: "EQUAL", 28: "PIPE", 29: "LEFT_BRACKET", 30: "RIGHT_BRACKET",
-            31: "LEFT_BRACE", 32: "RIGHT_BRACE", 33: "BACKSLASH",
+            0: "MINUS", 4: "LS(SEMICOLON)", 5: "EQUAL", 6: "LS(NUMBER_6)",
+            7: "LS(EQUAL)", 8: "LS(NUMBER_8)", 9: "LS(NUMBER_9)", 10: "SLASH",
+            14: "LS(SQT)", 16: "LS(INT_RO)", 17: "EXCLAMATION", 18: "LEFT_BRACKET",
+            19: "HASH", 20: "DOLLAR", 21: "PERCENT", 26: "PERIOD",
+            27: "LS(MINUS)", 28: "LS(INT_YEN)", 29: "RIGHT_BRACKET", 30: "NON_US_HASH",
+            31: "LS(RIGHT_BRACKET)", 32: "LS(NON_US_HASH)", 33: "INT_RO",
         }
         for mouse in (set(), {"MOUSE"}, {"SLOW"}, {"MOUSE", "SLOW"}):
             for position, code in base.items():
@@ -268,9 +271,28 @@ class KeymapTests(unittest.TestCase):
             self.assertRegex(resolve({"BASE", "NUM", "FUNCTION"}, position), r"&kp F1[123]")
             self.assertEqual(resolve({"BASE", "NUM"}, position), f"&kp {symbols[position]}")
 
+    def test_jis_native_shift_pairs_use_unshifted_usages(self):
+        # JIS host pairs, independently checked against QMK's Japanese usage table.
+        # These assertions inspect firmware bindings, not real host text output.
+        pairs = (
+            ("BASE", 16, "MINUS", "-", "="),
+            ("BASE", 27, "SQT", ":", "*"),
+            ("BASE", 28, "SEMICOLON", ";", "+"),
+            ("NUM", 5, "EQUAL", "^", "~"),
+            ("NUM", 18, "LEFT_BRACKET", "@", "`"),
+            ("NUM", 29, "RIGHT_BRACKET", "[", "{"),
+            ("NUM", 30, "NON_US_HASH", "]", "}"),
+            ("NUM", 33, "INT_RO", "\\", "_"),
+        )
+        for layer, position, code, plain, shifted in pairs:
+            with self.subTest(layer=layer, pair=(plain, shifted)):
+                self.assertEqual(resolve({"BASE", layer}, position), f"&kp {code}")
+        # JIS apostrophe already includes Shift+7; extra Shift does not turn it into quote.
+        self.assertEqual(LAYERS["NAV"][21], "&kp LS(NUMBER_7)")
+
     def test_punctuation_combos_keep_literal_outputs(self):
-        for name, code in (("double_quotation", "DOUBLE_QUOTES"), ("eq", "EQUAL")):
-            self.assertRegex(EXPANDED, rf"(?s){name}\s*\{{\s*bindings = <&kp {code}>;")
+        for name, code in (("double_quotation", "LS(NUMBER_2)"), ("eq", "LS(MINUS)")):
+            self.assertRegex(EXPANDED, rf"(?s){name}\s*\{{\s*bindings = <&kp {re.escape(code)}>;")
 
     def test_combos_do_not_capture_manual_layer_keys(self):
         combos = re.findall(
@@ -287,7 +309,7 @@ class KeymapTests(unittest.TestCase):
             self.assertIn("layers = <0 1 2 3>", body)
             positions = tuple(map(int, re.search(r"key-positions\s*=\s*<(.*?)>", body)[1].split()))
             self.assertEqual(positions, expected[name])
-        self.assertEqual(LAYERS["NUM"][28], "&kp PIPE")
+        self.assertEqual(LAYERS["NUM"][28], "&kp LS(INT_YEN)")
         self.assertEqual(LAYERS["SYSTEM"][32], "&bt BT_CLR_ALL")
         self.assertEqual(LAYERS["SYSTEM"][33], "&bt BT_CLR")
 
@@ -300,7 +322,7 @@ class KeymapTests(unittest.TestCase):
         for pointer in ({"MOUSE"}, {"SLOW"}, {"MOUSE", "SLOW"}):
             self.assertEqual(
                 [resolve({"BASE", "NUM"} | pointer, p) for p in (29, 30)],
-                ["&kp LEFT_BRACKET", "&kp RIGHT_BRACKET"],
+                ["&kp RIGHT_BRACKET", "&kp NON_US_HASH"],
             )
             self.assertEqual(
                 [resolve({"BASE", "FUNCTION"} | pointer, p) for p in (29, 30)],
@@ -309,7 +331,7 @@ class KeymapTests(unittest.TestCase):
         # The old inner key no longer enters SCROLL, in any layer combination.
         for flags in itertools.product((False, True), repeat=len(LAYER_NAMES) - 1):
             active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
-            expected = "&kp UNDERSCORE" if "NUM" in active else "&kp MINUS"
+            expected = "&kp LS(INT_RO)" if "NUM" in active else "&kp MINUS"
             self.assertEqual(resolve(active, 16), expected)
 
     def test_nm_press_and_release_orders_with_automouse_timeout_in_lookup_model(self):

@@ -2,7 +2,7 @@
 
 <img src="keymap-drawer/roBa.svg" alt="roBa keymap">
 
-`iwashita-nozomu/zmk-config-roBa` の個人用配置です。
+`iwashita-nozomu/zmk-config-roBa` の個人用配置です。**ホストの配列はJIS（日本語）を前提**とします。
 配置の正本は [config/roBa.keymap](config/roBa.keymap)、変更理由・検証結果は
 [追跡Issue #226](https://github.com/iwashita-nozomu/project_template/issues/226) に記録します。
 PR公開やビルド成功は実機への適用とは別です。書き込み後には、ZMK Studioの保存設定も含めて
@@ -154,55 +154,67 @@ NUM中のZ位置はタップ0／ホールドShiftのままです。
 NUM数字:   7 8 9    4 5 6    1 2 3    0（保持はShift）
 ```
 
-**Shiftで出る記号はホストの配列設定で決まり、通常数字への変更自体はJIS化ではありません。**
-半角・ローマ字入力での代表例は次のとおりです。
-
-| Shift＋数字 | US配列 | JIS配列 |
-| --- | --- | --- |
-| 2 | `@` | `"` |
-| 6 | `^` | `&` |
-| 7 | `&` | `'` |
-| 8 | `*` | `(` |
-| 9 | `(` | `)` |
-
-既存の専用記号はUS基準のままです。JISで記号全体を揃えるには、それらのキーコードも
-ホスト配列に合わせる必要があります。ホスト設定や記号配置をこの変更で切り替えてはいません。
-0とShiftは同じ物理キーなので、そのキーだけでShift+0は押せません。
-USでの `)` は既存のNUM+Pを使えます。括弧などの専用配置は削除していません。
-NUMのG右隣(15)にあるCtrl+Alt+テンキー0は別の既存ショートカットとして維持します。
-
-根拠: [ZMK数字キー](https://zmk.dev/docs/keymaps/list-of-keycodes#numbers)、
-[ZMKのホスト配列の説明](https://zmk.dev/blog/2024/01/05/zmk-tools)、
-[QMKのJISキー定義](https://github.com/qmk/qmk_firmware/blob/master/quantum/keymap_extras/keymap_japanese.h)。
-実機では空のエディタで数字0〜9、NUM+Z保持+各数字、NUM+Pの閉じ括弧を確認してください。
-構造検査は通常数字コードへの変更を確認しますが、ホスト上の文字出力やhold-tapの操作感は未検証です。
-
-## 記号とUS/JIS条件
-
-表はホストがUS配列として解釈し、半角入力で余分な修飾キーを保持していない場合の想定です。
-NUMの入口はSpaceホールドです。
-
-| 記号 | 操作位置 |
-| --- | --- |
-| `:` / `;` | B右隣(27) / N左隣(28)、通常層の専用キー |
-| `(` / `)` | NUM + O / P |
-| `[` / `]` | NUM + N / M |
-| `{` / `}` | NUM + `,` / `.` |
-| `<` / `>` | 通常のShift + `,` / `.` |
-| `'` / `"` | 通常SQT(21) / Shift+SQT、またはL+SQTコンボ |
-| `\` / `\|` | NUM + `/` / N左隣(28) |
-
-NUMはMOUSE/SLOWより上なので、括弧はクリックや低速に化けません。
-低速は引用符でなくMに置くため、引用符のコンボは変更しません。
-ZMKの記号名はUS基準のHIDキーと修飾で、Unicode文字送信ではありません。
-**IMEの日本語ON/OFFとUS/JIS配列認識は別条件です。** ホスト配列の自動変換は実装していません。
-[キー定義](https://github.com/zmkfirmware/zmk/blob/v0.3-branch/app/include/dt-bindings/zmk/keys.h)と照合し、
-実機ではシェルでなく空のエディタで、通常／マウス直後／解除後に次を入力して確認します。
+**数字も専用記号も、JISとして認識するホストに合わせています。**
+半角・ローマ字入力でのShift数字は次の対応です。
 
 ```text
-: ; () [] {} <> ' " \ | _ - = +
+数字:        1  2  3  4  5  6  7  8  9
+Shift記号:   !  "  #  $  %  &  '  (  )
+```
+
+0とShiftは同じ物理キーなので、そのキーだけでShift+0は押せません。
+JISの閉じ丸括弧はShift+9、または専用のNUM+Pを使えます。
+NUMのG右隣(15)にあるCtrl+Alt+テンキー0は別の既存ショートカットとして維持します。
+
+## 記号：JISのShift組合せ
+
+NUMはSpaceホールド、NUM中のShiftはZ位置のホールドです。
+**NUM+Jで@、NUM+Shift+Jでバッククォート**を出します。バッククォート用の新キーは追加しません。
+表はホストがJIS配列として解釈し、半角入力している場合の対応です。
+
+| 操作位置 | Shiftなし | Shiftあり |
+| --- | --- | --- |
+| NUM + J | `@` | バッククォート（U+0060） |
+| NUM + Y | `^` | `~` |
+| NUM + N / M | `[` / `]` | `{` / `}` |
+| 通常のB右隣(27) | `:` | `*` |
+| 通常のN左隣(28) | `;` | `+` |
+| 通常のH左隣(16)、またはNUM + Q | `-` | `=` |
+| NUM + `/` | バックスラッシュ（U+005C） | `_` |
+| 通常の`,` / `.` | `,` / `.` | `<` / `>` |
+| 通常の`/`、またはNUM + A | `/` | `?` |
+
+括弧などの専用配置は維持します。NUM+O/Pは丸括弧、NUM+`,`/`.`は波括弧、
+NUM+Iはチルダ、NUM+N左隣(28)はパイプ、NUM+H左隣(16)はアンダースコアです。
+**通常の右端引用符キー(21)はJISのShift+7によるシングルクォート**です。
+Shiftを追加してもダブルクォートにはなりません。ダブルクォートはNUM+Shift+2位置(C)、
+または既存のL+引用符コンボで出します。C+Vの等号コンボもJISのShift+MINUSへ変換済みです。
+
+ZMK標準の記号名はUSのHID位置が基準なので、JISで異なるものだけをkeymap冒頭の
+`JP_*` にまとめています。BASE/NUM/NAVと記号コンボはこの別名を参照します。
+バックスラッシュは円キーではなく `INT_RO`、パイプはShift+`INT_YEN`を使います。
+新しいbehavior、実行時のOS判定、Shift反転処理は追加せず、ホストの通常のShift処理を使います。
+
+NUMはMOUSE/SLOWより上なので、括弧はクリックや低速に化けません。
+**IMEの日本語ON/OFFとJIS配列認識は別条件です。** Windows/macOSともroBaをJISとして
+解釈する設定を前提とし、この変更でPC設定そのものは変更しません。USとして認識すると
+記号は一致しません。IMEのかな入力や全角入力、ホストの再割り当ても別条件です。
+
+根拠: [採用ZMKのキー定義](https://github.com/zmkfirmware/zmk/blob/v0.3-branch/app/include/dt-bindings/zmk/keys.h)、
+[QMKのJIS HID対応表](https://github.com/qmk/qmk_firmware/blob/master/quantum/keymap_extras/keymap_japanese.h)、
+[ZMKのホスト配列の説明](https://zmk.dev/blog/2024/01/05/zmk-tools)。
+QMKは対応表の照合だけに用い、QMKのコードや依存は取り込みません。
+
+実機ではシェルでなく空のエディタで、通常／マウス直後／解除後に次を確認します。
+`@` とShift+`@`、NUMの角括弧とShiftによる波括弧、通常の`;`/`:`とShift時の`+`/`*`も比較します。
+
+```text
+0123456789 !"#$%&'() @` ^~ :; () [] {} <> ' " \ | _ - = +
 std::vector<int> v; f(x[i], {a, b});
 ```
+
+ホスト上の実際の文字出力、特にバックスラッシュ（U+005C）と円記号（U+00A5）の区別は
+実機で未確認です。フォントの見た目だけでなく文字コードも照合してください。
 
 ## LANG交互送信とレイヤー順序
 
@@ -245,12 +257,14 @@ python3 -m compileall -q tests
 ```
 
 9層×43位置、全256層集合、LANG送信順、NAVの無入力、N/Mの組合せと解放順、MOUSEタイムアウト時の
-参照先、XY/scroll scaler設定、設定操作の右手集約、既存の記号・Fキーを検査します。
+参照先、XY/scroll scaler設定、設定操作の右手集約、JISの専用記号・Shift組合せの送信コード・記号コンボ・Fキーを検査します。
 **これはkeymap内マクロを展開する静的モデルであり、ZMKヘッダ・実HID・タイマー・ホストの出力・
 物理的な操作感を検証するものではありません。** 実機の速度・スクロール量・連打・解放順は未検証です。
 
 正規firmware buildは [.github/workflows/build.yml](.github/workflows/build.yml)、図は既存の
 [Draw Keymap](.github/workflows/draw.yml)です。keymap/配置JSON/描画設定の入力変更をpushすると、
 同じブランチへ `keymap-drawer/roBa.{yaml,svg}` を生成・コミットします。
+`keymap_drawer.config.yaml` の標準 `raw_binding_map` でJISの記号とShift側を表示します。
+別名はkeymapと同じプリプロセッサで解決するため、US名の誤ったラベルを表示しません。
 生成物自体は入力トリガーではなく、描画を再帰起動しません。別の生成経路や手編集した図は追加しません。
 成功したSHA、実行結果と検証限界はIssue/PRで追跡できます。
