@@ -121,9 +121,22 @@ class KeymapTests(unittest.TestCase):
     def test_modifiers_are_preserved(self):
         self.assertEqual(LAYERS["BASE"][34:37], ["&kp LCTRL", "&kp LEFT_WIN", "&kp LEFT_ALT"])
         self.assertEqual(LAYERS["BASE"][22], "&mt LEFT_SHIFT Z")
-        self.assertEqual(LAYERS["NUM"][22], "&mt LEFT_SHIFT KP_NUMBER_0")
+        self.assertEqual(LAYERS["NUM"][22], "&mt LEFT_SHIFT NUMBER_0")
         self.assertIn('flavor = "balanced";', SOURCE)
         self.assertIn("quick-tap-ms = <0>;", SOURCE)
+
+    def test_num_digits_use_shiftable_number_row_codes(self):
+        positions = (22, 23, 24, 25, 11, 12, 13, 1, 2, 3)  # 0..9
+        for flags in itertools.product((False, True), repeat=3):
+            active = {"BASE", "NUM"} | {
+                name for name, flag in zip(("IME_ALT", "MOUSE", "SLOW"), flags) if flag
+            }
+            for number, position in enumerate(positions):
+                binding = ("&mt LEFT_SHIFT " if number == 0 else "&kp ") + f"NUMBER_{number}"
+                with self.subTest(active=sorted(active), number=number):
+                    self.assertEqual(resolve(active, position), binding)
+        # This modified keypad shortcut is not a numeric-entry key.
+        self.assertEqual(LAYERS["NUM"][15], "&kp LC(LA(KP_NUMBER_0))")
 
     def test_only_send_order_bit_is_toggled(self):
         self.assertNotRegex(EXPANDED, r"&to\b")
