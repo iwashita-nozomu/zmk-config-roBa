@@ -6,6 +6,8 @@ validation against ZMK/Zephyr headers and bindings belongs to the firmware build
 """
 
 import itertools
+import os
+import tempfile
 from pathlib import Path
 import re
 import subprocess
@@ -18,7 +20,7 @@ EXPANDED = subprocess.check_output(
     input=re.sub(r"^#include .*\n", "", SOURCE, flags=re.MULTILINE),
     text=True,
 )
-LAYER_NAMES = ("BASE", "IME_ALT", "MOUSE", "SLOW", "NUM", "NAV", "FUNCTION", "SCROLL", "SYSTEM")
+LAYER_NAMES = ("BASE", "IME_ALT", "MOUSE", "MOUSE_HOLD", "SLOW", "NUM", "NAV", "FUNCTION", "SCROLL", "SYSTEM")
 BLOCKS = re.findall(
     r"\b(" + "|".join(LAYER_NAMES) + r")\s*\{(.*?)\n\s*\};",
     EXPANDED,
@@ -46,18 +48,18 @@ class KeymapTests(unittest.TestCase):
     def test_layer_order_and_size(self):
         self.assertEqual(tuple(name for name, _ in BLOCKS), LAYER_NAMES)
         self.assertTrue(all(len(keys) == 43 for keys in LAYERS.values()))
-        for index, suffix in enumerate(("BASE", "IME_ALT", "MOUSE", "SLOW", "NUM", "NAV", "FN", "SCROLL", "SYSTEM")):
+        for index, suffix in enumerate(("BASE", "IME_ALT", "MOUSE", "MOUSE_HOLD", "SLOW", "NUM", "NAV", "FN", "SCROLL", "SYSTEM")):
             self.assertRegex(SOURCE, rf"#define L_{suffix}\s+{index}\b")
-        self.assertIn("automouse-layer = <2>", EXPANDED)
-        self.assertIn("scroll-layers = <7>", EXPANDED)
+        self.assertIn("automouse-layer = <0>", EXPANDED)
+        self.assertIn("scroll-layers = <8>", EXPANDED)
 
     def test_base_entrypoints(self):
         expected = {
             7: "&kp I", 16: "&kp MINUS", 17: "&kp H",
-            29: "&lt 7 N", 30: "&kp M",
-            37: "&ime_shift LEFT_SHIFT LANG1", 38: "&lt 4 SPACE",
-            39: "&lt 5 TAB", 40: "&kp BACKSPACE",
-            41: "&lt 6 ENTER", 42: "&lt 8 ESCAPE",
+            29: "&lt 8 N", 30: "&lt 3 M",
+            37: "&ime_shift LEFT_SHIFT LANG1", 38: "&lt 5 SPACE",
+            39: "&lt 6 TAB", 40: "&kp BACKSPACE",
+            41: "&lt 7 ENTER", 42: "&lt 9 ESCAPE",
         }
         for position, binding in expected.items():
             with self.subTest(position=position):
@@ -72,8 +74,8 @@ class KeymapTests(unittest.TestCase):
         self.assertEqual(ime_positions, [("BASE", 37), ("IME_ALT", 37)])
         self.assertEqual(LAYERS["IME_ALT"][37], "&ime_shift LEFT_SHIFT LANG2")
         self.assertEqual(LAYERS["BASE"][37], "&ime_shift LEFT_SHIFT LANG1")
-        self.assertEqual(LAYERS["BASE"][38], "&lt 4 SPACE")
-        self.assertEqual(LAYERS["BASE"][39], "&lt 5 TAB")
+        self.assertEqual(LAYERS["BASE"][38], "&lt 5 SPACE")
+        self.assertEqual(LAYERS["BASE"][39], "&lt 6 TAB")
         # NAV now has a Tab tap; the retired SYSTEM/IME layer-tap stays absent.
         self.assertNotIn("lt_ime", EXPANDED)
 
@@ -83,7 +85,7 @@ class KeymapTests(unittest.TestCase):
             with self.subTest(active=sorted(active)):
                 code = "LANG2" if "IME_ALT" in active else "LANG1"
                 self.assertEqual(resolve(active, 37), f"&ime_shift LEFT_SHIFT {code}")
-                self.assertEqual(resolve(active, 39), "&lt 5 TAB")
+                self.assertEqual(resolve(active, 39), "&lt 6 TAB")
 
     def test_ime_bit_is_transparent_to_other_keys_and_sensors(self):
         self.assertEqual(
@@ -152,14 +154,14 @@ class KeymapTests(unittest.TestCase):
         self.assertNotRegex(SOURCE, r"&lt\s*\{")
         for flags in itertools.product((False, True), repeat=len(LAYER_NAMES) - 1):
             active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
-            self.assertEqual(resolve(active, 38), "&lt 4 SPACE")
-            self.assertEqual(resolve(active, 39), "&lt 5 TAB")
+            self.assertEqual(resolve(active, 38), "&lt 5 SPACE")
+            self.assertEqual(resolve(active, 39), "&lt 6 TAB")
 
     def test_num_digits_use_shiftable_number_row_codes(self):
         positions = (22, 23, 24, 25, 11, 12, 13, 1, 2, 3)  # 0..9
-        for flags in itertools.product((False, True), repeat=3):
+        for flags in itertools.product((False, True), repeat=4):
             active = {"BASE", "NUM"} | {
-                name for name, flag in zip(("IME_ALT", "MOUSE", "SLOW"), flags) if flag
+                name for name, flag in zip(("IME_ALT", "MOUSE", "MOUSE_HOLD", "SLOW"), flags) if flag
             }
             for number, position in enumerate(positions):
                 binding = ("&mt LEFT_SHIFT " if number == 0 else "&kp ") + f"NUMBER_{number}"
@@ -174,7 +176,7 @@ class KeymapTests(unittest.TestCase):
         self.assertNotIn("to_layer_0", SOURCE)
 
     def test_mouse_and_scroll_do_not_depend_on_each_other(self):
-        for layer in ("MOUSE", "SLOW", "SCROLL"):
+        for layer in ("MOUSE", "MOUSE_HOLD", "SLOW", "SCROLL"):
             with self.subTest(layer=layer):
                 self.assertEqual(LAYERS[layer][5:10], MOUSE_KEYS)
                 self.assertEqual([resolve({"BASE", layer}, p) for p in range(5, 10)], MOUSE_KEYS)
@@ -185,9 +187,9 @@ class KeymapTests(unittest.TestCase):
     def test_nav_uses_hjkl_and_disables_top_row(self):
         self.assertEqual(LAYERS["NAV"][5:10], ["&none"] * 5)
         self.assertEqual(LAYERS["NAV"][17:21], ARROWS)
-        for flags in itertools.product((False, True), repeat=4):
+        for flags in itertools.product((False, True), repeat=5):
             underlying = {"BASE"} | {
-                name for name, flag in zip(("IME_ALT", "MOUSE", "SLOW", "NUM"), flags) if flag
+                name for name, flag in zip(("IME_ALT", "MOUSE", "MOUSE_HOLD", "SLOW", "NUM"), flags) if flag
             }
             active = underlying | {"NAV"}
             with self.subTest(active=sorted(active)):
@@ -198,7 +200,7 @@ class KeymapTests(unittest.TestCase):
                     expected = ["&kp " + key for key in (
                         "EQUAL", "LS(NUMBER_6)", "LS(EQUAL)", "LS(NUMBER_8)", "LS(NUMBER_9)")]
                 else:
-                    expected = MOUSE_KEYS if underlying & {"MOUSE", "SLOW"} else LETTERS
+                    expected = MOUSE_KEYS if underlying & {"MOUSE", "MOUSE_HOLD", "SLOW"} else LETTERS
                 self.assertEqual([resolve(active - {"NAV"}, p) for p in range(5, 10)], expected)
         for position in (2, 11, 12, 13):
             self.assertEqual(LAYERS["NAV"][position], "&trans")
@@ -217,11 +219,11 @@ class KeymapTests(unittest.TestCase):
         for flags in itertools.product((False, True), repeat=len(LAYER_NAMES) - 1):
             active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
             with self.subTest(active=sorted(active)):
-                self.assertEqual(resolve(active, 42), "&lt 8 ESCAPE")
+                self.assertEqual(resolve(active, 42), "&lt 9 ESCAPE")
                 expected_delete = "&kp DEL" if "FUNCTION" in active else "&kp BACKSPACE"
                 self.assertEqual(resolve(active, 40), expected_delete)
                 self.assertEqual(resolve(active - {"FUNCTION"}, 40), "&kp BACKSPACE")
-                self.assertEqual(resolve(active - {"SYSTEM"}, 42), "&lt 8 ESCAPE")
+                self.assertEqual(resolve(active - {"SYSTEM"}, 42), "&lt 9 ESCAPE")
                 if "SYSTEM" in active:
                     expected_top = [f"&bt BT_SEL {i}" for i in range(5)]
                 elif "SCROLL" in active:
@@ -234,7 +236,7 @@ class KeymapTests(unittest.TestCase):
                     expected_top = ["&kp " + key for key in (
                         "EQUAL", "LS(NUMBER_6)", "LS(EQUAL)", "LS(NUMBER_8)", "LS(NUMBER_9)")]
                 else:
-                    expected_top = MOUSE_KEYS if active & {"MOUSE", "SLOW"} else LETTERS
+                    expected_top = MOUSE_KEYS if active & {"MOUSE", "MOUSE_HOLD", "SLOW"} else LETTERS
                 self.assertEqual([resolve(active, p) for p in range(5, 10)], expected_top)
 
     def test_release_removes_only_the_requested_layer_in_lookup_model(self):
@@ -266,8 +268,8 @@ class KeymapTests(unittest.TestCase):
         self.assertEqual(
             resolve({"BASE", "MOUSE"}, 37), "&ime_shift LEFT_SHIFT LANG1"
         )
-        self.assertEqual(resolve({"BASE", "MOUSE"}, 39), "&lt 5 TAB")
-        self.assertEqual(resolve({"BASE", "MOUSE"}, 42), "&lt 8 ESCAPE")
+        self.assertEqual(resolve({"BASE", "MOUSE"}, 39), "&lt 6 TAB")
+        self.assertEqual(resolve({"BASE", "MOUSE"}, 42), "&lt 9 ESCAPE")
 
     def test_mouse_exit_keeps_manual_layers_in_lookup_model(self):
         # Read the target from the macro; behavior semantics are checked above.
@@ -293,9 +295,9 @@ class KeymapTests(unittest.TestCase):
             27: "LS(MINUS)", 28: "LS(INT_YEN)", 29: "RIGHT_BRACKET", 30: "NON_US_HASH",
             31: "LS(RIGHT_BRACKET)", 32: "LS(NON_US_HASH)", 33: "INT_RO",
         }
-        for mouse in (set(), {"MOUSE"}, {"SLOW"}, {"MOUSE", "SLOW"}):
+        for mouse in (set(), {"MOUSE"}, {"SLOW"}, {"MOUSE", "MOUSE_HOLD", "SLOW"}):
             for position, code in base.items():
-                expected = "&mo 3" if position == 21 and mouse else f"&kp {code}"
+                expected = "&mo 4" if position == 21 and mouse else f"&kp {code}"
                 self.assertEqual(resolve({"BASE"} | mouse, position), expected)
             for position, code in symbols.items():
                 self.assertEqual(resolve({"BASE", "NUM"} | mouse, position), f"&kp {code}")
@@ -341,7 +343,7 @@ class KeymapTests(unittest.TestCase):
         for name, body in combos:
             layers = tuple(map(int, re.search(r"layers\s*=\s*<(.*?)>", body)[1].split()))
             # L+quote must not steal the new SLOW hold, even before SLOW activates.
-            expected_layers = (0, 1) if name == "double_quotation" else (0, 1, 2, 3)
+            expected_layers = (0, 1) if name == "double_quotation" else (0, 1, 2, 3, 4)
             self.assertEqual(layers, expected_layers)
             positions = tuple(map(int, re.search(r"key-positions\s*=\s*<(.*?)>", body)[1].split()))
             self.assertEqual(positions, expected[name])
@@ -351,14 +353,14 @@ class KeymapTests(unittest.TestCase):
 
 
     def test_pointing_controls_preserve_letters_symbols_and_function_keys(self):
-        self.assertEqual(LAYERS["BASE"][29:31], ["&lt 7 N", "&kp M"])
-        for layer in ("MOUSE", "SLOW", "SCROLL"):
-            self.assertEqual(LAYERS[layer][29], "&mo 7")
-            self.assertEqual(LAYERS[layer][21], "&mo 3")
-            self.assertEqual(LAYERS[layer][30], "&trans")
-            self.assertEqual(resolve({"BASE", layer}, 30), "&kp M")
+        self.assertEqual(LAYERS["BASE"][29:31], ["&lt 8 N", "&lt 3 M"])
+        for layer in ("MOUSE", "MOUSE_HOLD", "SLOW", "SCROLL"):
+            self.assertEqual(LAYERS[layer][29], "&mo 8")
+            self.assertEqual(LAYERS[layer][21], "&mo 4")
+            self.assertEqual(LAYERS[layer][30], "&mo 3")
+            self.assertEqual(resolve({"BASE", layer}, 30), "&mo 3")
             self.assertEqual(LAYERS[layer], LAYERS["MOUSE"])
-        for pointer in ({"MOUSE"}, {"SLOW"}, {"MOUSE", "SLOW"}):
+        for pointer in ({"MOUSE"}, {"SLOW"}, {"MOUSE", "MOUSE_HOLD", "SLOW"}):
             self.assertEqual(
                 [resolve({"BASE", "NUM"} | pointer, p) for p in (29, 30)],
                 ["&kp RIGHT_BRACKET", "&kp NON_US_HASH"],
@@ -373,7 +375,7 @@ class KeymapTests(unittest.TestCase):
             expected = "&kp LS(INT_RO)" if "NUM" in active else "&kp MINUS"
             self.assertEqual(resolve(active, 16), expected)
             if "SCROLL" in active:
-                expected_quote = "&mo 3"
+                expected_quote = "&mo 4"
             elif "FUNCTION" in active:
                 expected_quote = "&kp F10"
             elif "NAV" in active:
@@ -381,10 +383,13 @@ class KeymapTests(unittest.TestCase):
             elif "NUM" in active:
                 expected_quote = "&kp PERCENT"
             else:
-                expected_quote = "&mo 3" if active & {"MOUSE", "SLOW"} else "&kp LS(NUMBER_7)"
+                expected_quote = "&mo 4" if active & {"MOUSE", "MOUSE_HOLD", "SLOW"} else "&kp LS(NUMBER_7)"
             self.assertEqual(resolve(active, 21), expected_quote)
             expected_m = "&kp F12" if "FUNCTION" in active else (
-                "&kp NON_US_HASH" if "NUM" in active else "&kp M")
+                "&kp NON_US_HASH" if "NUM" in active else (
+                    "&mo 3" if active & {"MOUSE", "MOUSE_HOLD", "SLOW"} else "&lt 3 M"))
+            if "SCROLL" in active:
+                expected_m = "&mo 3"
             self.assertEqual(resolve(active, 30), expected_m)
 
     def test_pointing_press_and_release_orders_with_automouse_timeout_in_lookup_model(self):
@@ -411,7 +416,7 @@ class KeymapTests(unittest.TestCase):
                         if held:
                             self.assertEqual([resolve(active, p) for p in range(5, 10)], MOUSE_KEYS)
                             other = next(iter(held))
-                            expected = "&mo 7" if position == 29 else "&mo 3"
+                            expected = "&mo 8" if position == 29 else "&mo 4"
                             self.assertEqual(resolve(active, position), expected)
                             self.assertEqual(held[other], "SLOW" if other == 21 else "SCROLL")
                     self.assertEqual(active, {"BASE"} if timeout else {"BASE", "MOUSE"})
@@ -419,12 +424,12 @@ class KeymapTests(unittest.TestCase):
     def test_slow_is_independent_of_scroll_mode_and_uses_standard_scalers(self):
         self.assertIn("#include <input/processors.dtsi>", SOURCE)
         override = re.search(r"(?s)&trackball_listener\s*\{(.*?)\n\};", EXPANDED)[1]
-        self.assertIn("layers = <3>;", override)
+        self.assertIn("layers = <4>;", override)
         self.assertEqual(
             re.findall(r"&zip_(\w+)_scaler\s+(\d+)\s+(\d+)", override),
             [("xy", "1", "4"), ("scroll", "1", "4")],
         )
-        self.assertEqual(override.count("input-processors ="), 1)
+        self.assertEqual(override.count("input-processors ="), 2)
         self.assertNotIn("snipe-layers", EXPANDED)
         self.assertNotIn("sensor-bindings", dict(BLOCKS)["SLOW"])
         scroll_layers = set(map(int, re.search(r"scroll-layers = <(.*?)>", EXPANDED)[1].split()))
@@ -435,9 +440,9 @@ class KeymapTests(unittest.TestCase):
             self.assertEqual(highest in scroll_layers, "SCROLL" in active and "SYSTEM" not in active)
 
     def test_system_entry_and_dedicated_settings_are_right_handed(self):
-        self.assertEqual(LAYERS["BASE"][42], "&lt 8 ESCAPE")
+        self.assertEqual(LAYERS["BASE"][42], "&lt 9 ESCAPE")
         entries = [(name, p) for name, keys in LAYERS.items() for p, key in enumerate(keys)
-                   if re.match(r"&(?:mo|lt) 8(?: |$)", key)]
+                   if re.match(r"&(?:mo|lt) 9(?: |$)", key)]
         self.assertEqual(entries, [("BASE", 42)])
         # Physical positions verified against boards/shields/roBa/roBa.dtsi.
         right = set(range(5, 10)) | set(range(16, 22)) | set(range(28, 34)) | {40, 41, 42}
@@ -448,6 +453,57 @@ class KeymapTests(unittest.TestCase):
         self.assertEqual(LAYERS["SYSTEM"][28], "&bootloader")
         self.assertEqual(LAYERS["SYSTEM"][32:34], ["&bt BT_CLR_ALL", "&bt BT_CLR"])
         self.assertNotIn("lt_ime", EXPANDED)
+
+
+    def test_automatic_entry_uses_one_standard_owner_after_dwell(self):
+        self.assertIn("automouse-layer = <0>;", EXPANDED)
+        self.assertIn("delegate = <&zip_temp_layer>;", EXPANDED)
+        self.assertIn("manual-layer = <3>;", EXPANDED)
+        self.assertIn("dwell-ms = <200>;", EXPANDED)
+        self.assertIn("max-gap-ms = <80>;", EXPANDED)
+        self.assertIn("require-prior-idle-ms = <300>;", EXPANDED)
+        self.assertEqual(SOURCE.count("#define AUTOMOUSE_PROCESSOR "), 1)
+        self.assertEqual(EXPANDED.count("&mouse_dwell 2 1000"), 2)
+        # Both normal and SLOW paths qualify raw XY before scaling.
+        self.assertRegex(EXPANDED, r"input-processors = <&mouse_dwell 2 1000>, <&zip_xy_scaler 1 4>, <&zip_scroll_scaler 1 4>;")
+        conf = (Path(__file__).resolve().parents[1] / "boards/shields/roBa/roBa_R.conf").read_text()
+        self.assertNotIn("CONFIG_PMW3610_AUTOMOUSE_TIMEOUT_MS", conf)
+        self.assertNotIn("CONFIG_PMW3610_MOVEMENT_THRESHOLD", conf)
+
+    def test_typing_exit_preserves_the_first_key_and_manual_layers(self):
+        excluded = set(map(int, re.search(r"excluded-positions\s*=\s*<(.*?)>", EXPANDED)[1].split()))
+        self.assertEqual(excluded, {5, 6, 7, 8, 9, 21, 29, 30, 34, 35, 36, 37})
+        for flags in itertools.product((False, True), repeat=len(LAYER_NAMES) - 1):
+            active = {"BASE", "MOUSE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
+            for position in set(range(43)) - excluded:
+                self.assertEqual(resolve(active, position), resolve(active - {"MOUSE"}, position))
+        self.assertEqual(resolve({"BASE", "MOUSE"}, 10), "&kp A")
+        self.assertEqual(resolve({"BASE"}, 7), "&kp I")
+
+    def test_manual_mouse_survives_automatic_expiry(self):
+        self.assertEqual(LAYERS["BASE"][30], "&lt 3 M")
+        for name in ("MOUSE", "MOUSE_HOLD", "SLOW", "SCROLL"):
+            self.assertEqual(LAYERS[name], LAYERS["MOUSE"])
+            self.assertEqual(LAYERS[name][30], "&mo 3")
+        # The standard timer controls layer 2, never the momentary layer 3.
+        active = {"BASE", "MOUSE", "MOUSE_HOLD"}
+        active.remove("MOUSE")
+        self.assertEqual([resolve(active, p) for p in range(5, 10)], MOUSE_KEYS)
+        active.remove("MOUSE_HOLD")
+        self.assertEqual([resolve(active, p) for p in range(5, 10)], LETTERS)
+        for layer in ("NUM", "NAV", "FUNCTION"):
+            for position in range(43):
+                # Only positions transparent in a manual operation layer inherit the pointer layer.
+                if LAYERS[layer][position] != "&trans":
+                    self.assertEqual(resolve({"BASE", layer, "MOUSE_HOLD"}, position), LAYERS[layer][position])
+
+    def test_production_motion_dwell_time_boundaries(self):
+        root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as temp:
+            exe = Path(temp) / "motion-dwell"
+            subprocess.run([os.environ.get("CC", "cc"), "-std=c11", "-Wall", "-Wextra", "-Werror",
+                            "-pedantic", str(root / "tests/motion_dwell.c"), "-o", str(exe)], check=True)
+            subprocess.run([str(exe)], check=True)
 
 if __name__ == "__main__":
     unittest.main()

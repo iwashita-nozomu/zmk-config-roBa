@@ -1,0 +1,21 @@
+description: Qualify sustained XY motion before calling the standard temporary-layer processor
+compatible: "zmk,input-processor-motion-dwell"
+include: ip_two_param.yaml
+
+properties:
+  delegate:
+    type: phandle
+    required: true
+    description: Standard temporary-layer processor receiving the layer and timeout parameters
+  manual-layer:
+    type: int
+    required: true
+    description: Independently held layer; do not create or renew automatic ownership while held
+  dwell-ms:
+    type: int
+    required: true
+    description: Minimum duration spanned by a continuous run of nonzero XY samples
+  max-gap-ms:
+    type: int
+    required: true
+    description: A larger gap between nonzero samples starts a new run

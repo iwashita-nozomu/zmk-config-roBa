@@ -31,18 +31,21 @@
 #define L_BASE    0
 #define L_IME_ALT 1
 #define L_MOUSE   2
-#define L_SLOW    3
-#define L_NUM     4
-#define L_NAV     5
-#define L_FN      6
-#define L_SCROLL  7
-#define L_SYSTEM  8
+#define L_MOUSE_HOLD 3
+#define L_SLOW    4
+#define L_NUM     5
+#define L_NAV     6
+#define L_FN      7
+#define L_SCROLL  8
+#define L_SYSTEM  9
 
-// Held SCROLL/SLOW must retain clicks, N (scroll), and the key below P (slow) after MOUSE expires.
+// All pointing layers share controls; manual holds outlive automatic MOUSE.
+// Only the automatic layer has a timeout; MOUSE_HOLD is owned by the held M key.
+#define AUTOMOUSE_PROCESSOR &mouse_dwell L_MOUSE 1000
 #define POINTING_BINDINGS \
     &trans  &trans  &trans  &trans  &trans  &kp LC(C)  &mkp MB1  &mkp MB3  &mkp MB2  &kp LC(V) \
     &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo L_SLOW \
-    &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo L_SCROLL  &trans  &trans  &trans  &trans \
+    &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo L_SCROLL  &mo L_MOUSE_HOLD  &trans  &trans  &trans \
     &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
 
 &mt {
@@ -51,39 +54,57 @@
 };
 
 &trackball {
-    automouse-layer = <L_MOUSE>;
+    // Disable the driver timer: standard temp-layer is the sole automatic owner.
+    automouse-layer = <0>;
     scroll-layers = <L_SCROLL>;
+};
+
+&zip_temp_layer {
+    require-prior-idle-ms = <300>;
+    // Click/copy/paste, slow, scroll, manual mouse, and modifier positions.
+    excluded-positions = <5 6 7 8 9 21 29 30 34 35 36 37>;
 };
 
 // This listener is enabled only on the pointing (right) half by its overlay.
 // Apply both scalers whenever SLOW is active, including beneath SCROLL.
 &trackball_listener {
+    input-processors = <AUTOMOUSE_PROCESSOR>;
     slow {
         layers = <L_SLOW>;
-        input-processors = <&zip_xy_scaler 1 4>, <&zip_scroll_scaler 1 4>;
+        // Gate before scaling, so tiny raw motion still counts as activity.
+        input-processors = <AUTOMOUSE_PROCESSOR>, <&zip_xy_scaler 1 4>, <&zip_scroll_scaler 1 4>;
     };
 };
 
 / {
+    mouse_dwell: mouse_dwell {
+        compatible = "zmk,input-processor-motion-dwell";
+        #input-processor-cells = <2>;
+        delegate = <&zip_temp_layer>;
+        manual-layer = <L_MOUSE_HOLD>;
+        dwell-ms = <200>;
+        max-gap-ms = <80>;
+    };
+
     combos {
         compatible = "zmk,combos";
 
         tab {
             bindings = <&kp TAB>;
             key-positions = <11 12>;
-            layers = <L_BASE L_IME_ALT L_MOUSE L_SLOW>;
+            layers = <L_BASE L_IME_ALT L_MOUSE L_MOUSE_HOLD L_SLOW>;
         };
 
         shift_tab {
             bindings = <&kp LS(TAB)>;
             key-positions = <12 13>;
-            layers = <L_BASE L_IME_ALT L_MOUSE L_SLOW>;
+            layers = <L_BASE L_IME_ALT L_MOUSE L_MOUSE_HOLD L_SLOW>;
         };
 
         exit_mouse {
             bindings = <&mouse_off L_MOUSE>;
             key-positions = <11 10>;
-            layers = <L_BASE L_IME_ALT L_MOUSE L_SLOW>;
+            layers = <L_BASE L_IME_ALT L_MOUSE L_MOUSE_HOLD L_SLOW>;
         };
 
         double_quotation {
@@ -96,7 +117,7 @@
         eq {
             bindings = <&kp JP_EQUAL>;
             key-positions = <24 25>;
-            layers = <L_BASE L_IME_ALT L_MOUSE L_SLOW>;
+            layers = <L_BASE L_IME_ALT L_MOUSE L_MOUSE_HOLD L_SLOW>;
         };
     };
 
@@ -138,7 +159,7 @@
             bindings = <
 &kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &kp U  &kp I      &kp O    &kp P
 &kp A             &kp S         &kp D         &kp F                   &kp G        &kp LS(LG(S))    &kp MINUS  &kp H        &kp J  &kp K      &kp L    &kp JP_SQT
-&kp Z            &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &lt L_SCROLL N        &kp M  &kp COMMA  &kp DOT  &kp SLASH
+&kp Z            &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &lt L_SCROLL N        &lt L_MOUSE_HOLD M  &kp COMMA  &kp DOT  &kp SLASH
 &kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_shift LEFT_SHIFT LANG1  &lt L_NUM SPACE  &lt L_NAV TAB  &kp BACKSPACE  &lt L_FN ENTER                     &lt L_SYSTEM ESCAPE
             >;
 
@@ -157,6 +178,11 @@
         };
 
         MOUSE {
+            bindings = <POINTING_BINDINGS>;
+        };
+
+        // Independent of the automatic timeout; standard momentary ownership.
+        MOUSE_HOLD {
             bindings = <POINTING_BINDINGS>;
         };
 
