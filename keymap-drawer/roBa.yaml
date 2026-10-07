@@ -31,7 +31,7 @@ layers:
   - {t: ':', s: '*'}
   - {t: ;, s: +}
   - {t: N, h: SCROLL}
-  - M
+  - {t: M, h: MOUSE_HOLD}
   - {t: ',', s: <}
   - {t: ., s: '>'}
   - {t: /, s: '?'}
@@ -119,7 +119,51 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - SCROLL
+  - MOUSE_HOLD
   - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  MOUSE_HOLD:
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - Ctl+C
+  - '&mkp MB1'
+  - '&mkp MB3'
+  - '&mkp MB2'
+  - Ctl+V
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - SLOW
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - SCROLL
+  - {t: MOUSE_HOLD, type: held}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -163,7 +207,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - SCROLL
-  - {t: ▽, type: trans}
+  - MOUSE_HOLD
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -339,7 +383,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: SCROLL, type: held}
-  - {t: ▽, type: trans}
+  - MOUSE_HOLD
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -399,16 +443,16 @@ layers:
 combos:
 - p: [11, 12]
   k: TAB
-  l: [BASE, IME_ALT, MOUSE, SLOW]
+  l: [BASE, IME_ALT, MOUSE, MOUSE_HOLD, SLOW]
 - p: [12, 13]
   k: Sft+TAB
-  l: [BASE, IME_ALT, MOUSE, SLOW]
+  l: [BASE, IME_ALT, MOUSE, MOUSE_HOLD, SLOW]
 - p: [11, 10]
   k: '&mouse_off 2'
-  l: [BASE, IME_ALT, MOUSE, SLOW]
+  l: [BASE, IME_ALT, MOUSE, MOUSE_HOLD, SLOW]
 - p: [20, 21]
   k: '"'
   l: [BASE, IME_ALT]
 - p: [24, 25]
   k: '='
-  l: [BASE, IME_ALT, MOUSE, SLOW]
+  l: [BASE, IME_ALT, MOUSE, MOUSE_HOLD, SLOW]
