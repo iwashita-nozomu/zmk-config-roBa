@@ -19,34 +19,34 @@ PR公開やビルド成功は実機への適用とは別です。書き込み後
 | --- | --- | --- |
 | 左親指、Space左 (37) | IME切替＋MOUSE解除 | Shift |
 | Space (38) | Space | NUM |
-| 左親指、Space右 (39) | Tab | NAV、離すと解除 |
+| 左親指、Space右・旧Tab (39) | かな漢字変換（Space相当） | NAV、離すと解除 |
 | 右親指Backspace (40) | Backspace | FUNCTION中だけDelete |
 | 右親指Enter (41) | Enter | FUNCTION |
 | 右下Esc (42) | Esc | SYSTEM |
-| U (6) | 通常層ではU | MOUSE_HOLD。マウス中に押すUは左クリック |
-| N (29) | N | 通常層からはSCROLL |
+| U (6) | 通常層ではU | MOUSE_HOLD。マウス中は押下から保持 |
+| N (29) | N | 通常のNリピート。スクロール兼用なし |
+| M (30) | 通常層ではM | SCROLL。マウス中は押下から有効 |
 | P直下の引用符キー (21) | 通常層では `'` | 通常層からもSLOW。マウス操作中は押下から有効 |
-| M (30) | 通常層ではM | MOUSE_HOLD。マウス操作中は押下から有効 |
 | H左隣の `-` (16) | 普通の `-` | スクロール兼用を撤去 |
 
-**マウス操作中はN＝スクロール、P直下の引用符キー(21)＝低速です。Mの低速割り当ては撤去しました。**
-通常Nと引用符、Space/Tab/Esc/Enterは標準layer-tapを使います。U/Mも同じ200ms・tap-preferred判定で、
-タップは文字、ホールドはMOUSE_HOLDです。通常Uの長押しリピートはマウス入口へ置き換わります。
-MOUSE/MOUSE_HOLD/SCROLL/SLOWのNとP直下キーは `&mo` なので、押下時に有効、解放時に解除します。
+**Nのスクロール役割をM位置へ移しました。文字のN/Mは交換していません。**
+Mの旧MOUSE_HOLD入口は撤去し、Uを通常速度の手動入口にします。
+U/M/引用符、Space/変換/Esc/Enterは標準layer-tapの200ms・tap-preferred判定を使います。
+タップは文字等、ホールドは各レイヤーです。マウス中のU/M/引用符は標準 `&mo` で即時保持します。
 左親指IMEはタップでIME切替、ホールドでShiftです。SYSTEMには入りません。
 
 保持解除はそのレイヤーだけを外し、ほかの保持状態やIME送信順をリセットしません。
 解放後の**新しい押下**が残ったレイヤーで解決されます。既に押下中のキーを途中で別のHIDキーに
-変換する動作ではありません。通常N保持はSCROLL、U/M保持はMOUSE_HOLD、引用符保持はSLOWになります。
+変換する動作ではありません。通常U保持はMOUSE_HOLD、M保持はSCROLL、引用符保持はSLOWです。
 
 Ctrl・GUI (Win/Command)・Altの専用キーは維持しています。
-Z/H/Iは普通の文字キーです。削除コンボは追加していません。
+Z/H/I/Nは通常層で普通の文字キーです。削除コンボは追加していません。
 右親指のBackspaceはタップ／ホールド兼用にせず、押しっぱなしの連続削除を使えます。
 DeleteはEnterのFUNCTIONを保持して同じBackspace位置を押します。
 
 ### ShiftとZ
 
-**左親指IMEキー(37)を押しながら通常のZ(22)を押すとShift+Z**です。
+**NUM/NAVを離した通常層で、左親指IMEキー(37)を保持したままZ(22)を押すとShift+Z**です。
 Zは `&kp Z` であり、保持してもShiftへ変わらず通常のキーリピートを使えます。
 IME/ShiftはZMK標準hold-tapの合成で、200ms保持、または保持中に別キーを押すとShiftになります
 （`hold-preferred`）。Shift保持・解放ではLANG送信、IME送信順反転、MOUSE解除を行いません。
@@ -54,45 +54,70 @@ IMEを切り替えるときは、単独で短くタップして離してから�
 
 NUM中はZ位置の「0/Shift」、NAV中はZ位置の専用Shiftを維持しています。
 NUM/NAV用の親指キーとIME/Shiftの親指キーを同時に押す必要はありません。
-範囲選択はTab/NAVをホールドしてからZ位置のShiftとHJKLを使います。
+範囲選択は変換/NAVをホールドしてからZ位置のShiftとHJKLを使います。
 Shift+Tabには既存のD+Fコンボも使えます。
 
 根拠: [ZMK Hold-Tap](https://zmk.dev/docs/keymaps/behaviors/hold-tap)。
+
+### 左親指の変換とTab
+
+**旧Tab位置(39)のタップは、入力中のかなを変換するSpaceです。保持NAVは残します。**
+Mac日本語入力とWindows Microsoft IMEに共通のかな漢字変換・候補操作を使うため、
+専用のJIS `INT_HENKAN` やLANG切替は送信しません。未変換文字がないときは通常の空白です。
+確定済み文字の再変換を専用HENKANキーと同じ方法で行う機能ではありません。
+実際の候補操作はIMEの設定・入力状態に従い、ファームウェアはホストのIME状態を推定しません。
+
+Tabは既存のS+D、Shift+TabはD+Fに残ります。J+Kは変換やマウス入口ではなく、下記の中クリックです。
+
+根拠: [Macの日本語入力](https://support.apple.com/ja-jp/guide/japanese-input-method/jpim10265/6.3/mac/26)、
+[Microsoft日本語IME](https://support.microsoft.com/ja-jp/windows/hardware/input-devices/microsoft-japanese-ime)。
 
 ## MOUSE / MOUSE_HOLD / SCROLL / SLOW
 
 | 位置 | マウス操作中の出力 |
 | --- | --- |
 | Y / P | Ctrl+C / Ctrl+V |
-| U / I / O | 左／中／右クリック (MB1/MB3/MB2) |
-| **N / P直下の引用符キー(21)** | **保持でSCROLL／保持でSLOW** |
+| U | 保持でMOUSE_HOLD |
+| **I / O** | **左／右クリック (MB1/MB2)** |
+| **J＋K** | **ホイール（中）クリック (MB3)** |
+| **M / P直下の引用符キー(21)** | **保持でSCROLL／保持でSLOW** |
 
 **自動切替と、次の手動入口があります。**
 
 - **自動**：非ゼロのXY移動が200ms以上続き、最後のキーコード入力から300ms以上経過した場合。
   移動報告の間隔が80msを超えると最初から数え直します。触れて止めたあと、待つだけでは入りません。
-- **U/M保持**：通常層のU(6)または従来のM(30)を200ms保持してMOUSE_HOLDへ入ります。
-  ボール操作は不要です。短いタップはU/M。マウス中のMは押下から保持し、Uは従来の即時左クリックです。
+- **U保持**：通常層のU(6)を200ms保持してMOUSE_HOLDへ入ります。ボール操作は不要です。
+  短いタップはU。マウス中のUは押下から保持できます。MからMOUSE_HOLDには入りません。
 - **低速保持**：P直下の引用符(21)を通常層から200ms保持するとSLOWへ入り、離すとSLOWだけ解除します。
-  短いタップはJISのシングルクォート。Nと組み合わせると低速スクロールです。
-- **J＋Kコンボ**：通常/IME_ALTでJ(18)とK(19)を50ms以内に同時押しするとMOUSE_HOLDへ入ります。
-  `slow-release`で両キーを離すまで保持します。離した後も固定されるトグルではなく、IMEの変換キーでもありません。
-  NUM/NAV/FUNCTION/SYSTEMやマウス保持中には新規発動しません。J/Kの高速ロールとの識別は実機確認が必要です。
+  短いタップはJISのシングルクォート。Mと組み合わせると低速スクロールです。
 
 自動MOUSEは最後の非ゼロXY入力から1000msで解除します。MOUSE_HOLDはタイムアウトせず、
-U/M/コンボの最後の保持が終わるとそのレイヤーだけ解除します。両者のキー配置は同じですが、所有を分けることで自動タイマーが
-手動保持を壊さないようにしています。MOUSE_HOLD中は自動MOUSEを新規有効化・延長しません。
-すでに自動MOUSEが残っていた場合、最後の手動保持を離した後はその残り時間に従います。
+Uを離すとそのレイヤーだけ解除します。自動タイマーと所有を分けているので、U保持を自動期限が壊しません。
+MOUSE_HOLD中は自動MOUSEを新規有効化・延長しません。
+すでに自動MOUSEが残っていた場合、Uを離した後はその残り時間に従います。
 
-通常状態からNを保持すれば直接SCROLLにも入れます。N＝スクロール、P直下(21)＝低速は維持します。
-N→引用符でも引用符→Nでも、保持判定後に低速スクロールへ入れます。
-NUMのU/引用符/Mは&/%/]、NAVのUは無入力、FUNCTIONではF2/F10/F12を維持します。
+**Uを保持したままIを押すと左クリックでき、I保持＋ボール操作でドラッグできます。**
+旧Uクリック・Mへの持ち替え操作は不要です。MOUSE_HOLDの入口はUだけなので、保持数を数える
+独自shared_moは撤去し、標準lt/moに揃えています。SLOW/SCROLLは別の保持です。
+SLOWを離しても、自動MOUSE等が残っていればその状態へ戻ります。
 
-U長押しで入ったとき、その同じ押下を途中から左クリックへ変換しません。左クリックはMを保持してからUを押すか、
-Uで入る→Mを押して保持を引き継ぐ→Uを離す→Uを押し直す、の操作です。J＋KからMへの引継ぎもできます。
-[shared_mo](src/behavior_shared_momentary_layer.c)は保持数を数え、最初の保持でON、最後の解放でOFFにします。
-同じMOUSE_HOLDへのU/M/コンボ入口は全てこのbehaviorを使い、通常moを混在させません。
-SLOW/SCROLLは別の保持です。SLOWを離しても、自動MOUSE等が残っていればその状態へ戻ります。
+通常状態からMを保持すれば直接SCROLLにも入れます。M→引用符でも引用符→Mでも低速スクロールです。
+NUMのU/引用符/N/Mは&/%/[/]、NAVのUは無入力、FUNCTIONではF2/F10/F11/F12を維持します。
+Nはマウス中も文字入力に戻れるキーで、スクロールを開始しません。
+
+### J＋Kの中クリック
+
+マウス層（MOUSE/MOUSE_HOLD/SLOW/SCROLL）でJ(18)とK(19)を50ms以内に同時押しすると
+中ボタンを押下します。**どちらか一方を離すと中ボタンを解放**する標準コンボです。
+両キーを離すまで保持する `slow-release` や固定トグルは使いません。
+マウス中のJ/K単独は `&none` で、コンボ不成立時に文字を漏らしません。
+生のJ/K押下で先に自動MOUSEが解除されないよう、両位置を解除除外に含めています。
+
+通常層のJ/Kは普通の文字、NAVのJ/Kは下／上矢印です。
+NUM/NAV/FUNCTION/SYSTEMが最高位のときはこのコンボを発動させません。
+コンボ・hold-tapの実際のイベント順序と押し心地は実機確認が必要です。
+
+根拠: [ZMK Combos](https://zmk.dev/docs/keymaps/combos)。
 
 200/80/300msは実機調整用の初期値です。動きの連続性はセンサーの移動報告で判定し、手の接触や
 使用者の意図を直接検知しません。キーを長く保持している状態やホスト側キーリピートは、
@@ -103,12 +128,12 @@ Mac画面操作ショートカットは追加していません。
 | --- | --- |
 | なし | 通常カーソル移動 |
 | P直下の引用符キー | 低速カーソル移動 |
-| N | 通常スクロール |
-| N＋P直下の引用符キー | 低速スクロール |
+| M | 通常スクロール |
+| M＋P直下の引用符キー | 低速スクロール |
 
-MOUSE中からNとP直下キーをどちらの順で押しても組み合わせられます。
-両方保持した状態からP直下キーだけ離すと通常スクロール、Nだけ離すと低速カーソル移動へ戻ります。
-MOUSEがタイムアウトしても、保持中SCROLL/SLOWのUIOクリックやN・P直下キーの入口は文字に落ちません。
+MOUSE中からMとP直下キーをどちらの順で押しても組み合わせられます。
+両方保持した状態からP直下キーだけ離すと通常スクロール、Mだけ離すと低速カーソル移動へ戻ります。
+MOUSEがタイムアウトしても、保持中SCROLL/SLOWのI/OクリックやM・P直下キーの入口は文字に落ちません。
 4つのレイヤーのbindingsは `POINTING_BINDINGS` を共有し、内容を二重管理しません。
 
 低速倍率は入力移動量の **1/4** です。`trackball_listener` のSLOW overrideでZMK標準の
@@ -121,7 +146,7 @@ SLOWをSCROLLより下位に置き、listenerはSLOWが**有効かどうか**で
 このためSCROLL中にも低速が効き、低速キーを押すことでスクロールがカーソル移動へ化けません。
 NUMのN/Mは角括弧、FUNCTIONのN/MはF11/F12を維持します。P直下キーもNUMでは%、
 NAVでは引用符、FUNCTIONではF10が優先します（別途SCROLLを保持した場合はポインティング優先）。
-L+引用符のダブルクォートコンボだけはBASE/IME_ALT限定とし、MOUSE/SLOWで低速ホールドを奪わないようにしています。
+L+引用符のダブルクォートコンボはBASE/IME_ALT限定とし、MOUSE/SLOWで低速ホールドを奪わないようにしています。
 
 倍率は画面上の速度の厳密な1/4を保証しません。OS加速やアプリのスクロール処理も影響します。
 スクロールは既存ドライバの整数ホイールイベントを縮小するため、同方向では概ね4イベントごとに
@@ -134,19 +159,20 @@ L+引用符のダブルクォートコンボだけはBASE/IME_ALT限定とし、
 
 ### キータップで文字入力へ戻る
 
-通常の文字・記号、Space/Tab/Enter/Backspace等を押すと**自動MOUSEだけ**を解除します。
+通常の文字・記号、Space/変換/Tab/Enter/Backspace等を押すと**自動MOUSEだけ**を解除します。
 最初のキーイベントも後続へ渡し、解除のためだけに1打を捨てる方式にはしません。
-解除しない位置はYUIOP(5–9)、低速21、スクロール29、手動M30、Ctrl/GUI/Alt(34–36)、IME/Shift37です。
+解除しない位置はYUIOP(5–9)、中クリックJ/K(18/19)、低速21、スクロールM30、Ctrl/GUI/Alt(34–36)、IME/Shift37です。
 Shiftとして37を保持しただけでは解除せず、短いIMEタップでは従来のMOUSE解除＋LANG入力を実行します。
-A＋Sの明示解除も残し、入力言語やLANG送信順を変えません。HJKLは通常文字なので解除対象です。
-MOUSE中のYUIOP・N・引用符・Mから文字入力を始める場合は、まず明示解除するかタイムアウトを待ちます。
+A＋Sの明示解除も残し、入力言語やLANG送信順を変えません。H/L/Nは通常文字なので解除対象です。
+MOUSE中のYUIOP・J/K・M・引用符から文字入力を始める場合は、まず明示解除するかタイムアウトを待ちます。
 
 NUM/NAV/FUNCTION/SYSTEMやIME送信順は消しません。保持中のMOUSE_HOLD/SCROLL/SLOWも残るため、
-文字入力に完全に戻る際はU/M/コンボ/N/低速の保持を離してください。全層を消す `&to 0` は使いません。
+文字入力に完全に戻る際はU/M/低速の保持を離してください。全層を消す `&to 0` は使いません。
 
 自動MOUSEの継続判定・入力休止・取消し・保持期限は [motion_dwell.c](src/motion_dwell.c) が一括管理します。
 PMW3610側の `automouse-layer=0` と、不要になったドライバの自動設定の撤去は維持します。
-標準 `zip_temp_layer` への委譲は廃止し、自動制御を二重に動かしません。速度変換・hold-tap・コンボの判定はZMK標準です。手動MOUSEの共有保持だけをshared_moが管理します。
+標準 `zip_temp_layer` への委譲は廃止し、自動制御を二重に動かしません。
+速度変換・手動保持・hold-tap・コンボの判定はZMK標準です。
 
 遅延処理は過去のON/OFF要求をキューに積まず、1つのZephyr delayable workで**現在の要求と最新の期限**を確認します。
 通常キーの押下は、既に有効な自動MOUSEだけでなく、まだ実行していない有効化要求も取り消します。
@@ -158,7 +184,7 @@ PMW3610側の `automouse-layer=0` と、不要になったドライバの自動�
 A＋Sのように文字キーコードを送らない操作でも予約を取り消せます。キーイベントそのものは消費しません。
 移動が途切れたとき、キーコード押下時、レイヤー変化時に継続判定をやり直します。
 低速overrideも同じ入口をスケーラーの前に通し、1000msはkeymapの `AUTOMOUSE_PROCESSOR` に一度だけ定義します。
-自動切替の200/80/300/1000ms、除外位置とレイヤー番号は維持しています。
+時間値200/80/300/1000msとレイヤー番号は維持し、解除除外は今回のクリック／スクロール位置に合わせています。
 
 根拠: [Zephyr Work Queues](https://docs.zephyrproject.org/latest/kernel/services/threads/workqueue.html)。
 再スケジュールしても既にキューに入ったworkは取り消されないため、取消しフラグと最新期限を実行時の判断基準にします。
@@ -167,7 +193,7 @@ A＋Sのように文字キーコードを送らない操作でも予約を取り
 
 Y/Pは「ターミナルではマウスを使わない」という利用方針でCtrl+C/Vを維持します。
 生のCtrl+CがTTYへ届けば通常はSIGINTで前景ジョブを中断し、Ctrl+Vもzshの標準Emacs編集では
-quoted-insertで、貼り付けとは限りません。端末へ移った直後はA＋SでMOUSEを解除し、U/M/コンボ/NとP直下の低速キーも離します。
+quoted-insertで、貼り付けとは限りません。端末へ移った直後はA＋SでMOUSEを解除し、U/MとP直下の低速キーも離します。
 WezTerm標準のクリップボード操作はCtrl+Shift+C/V（macOSではCommand+C/Vも）ですが、
 全GUIアプリへそのまま適用できるわけではありません。Ctrl/Commandの自動変換はしていません。
 
@@ -177,10 +203,10 @@ WezTerm標準のクリップボード操作はCtrl+Shift+C/V（macOSではComman
 
 ## NAV / FUNCTION
 
-**左親指のSpace右(39)は、タップでTab、ホールド中だけNAVです。**
-Space/NUM(38)は変更していません。NAV入口は `&lt L_NAV TAB` で、標準layer-tapの
+**左親指のSpace右(39)は、タップで変換用Space、ホールド中だけNAVです。**
+Space/NUM(38)は変更していません。NAV入口は `&lt L_NAV SPACE` で、標準layer-tapの
 200ms・tap-preferred判定を使います。即時の `&mo` ではないため、矢印操作はホールド判定後に行います。
-保持が成立した後は離してもTabを送らず、NAVだけを解除します。
+保持が成立した後は離してもSpaceを送らず、NAVだけを解除します。
 NAV中のH/J/K/Lは左/下/上/右です。
 Y/U/I/O/Pは `&none` で、文字も下位MOUSE/NUMの操作も送りません。
 Home/End、Ctrl+Tab、Ctrl+Shift+Tab、GUI+Shift+左右矢印、エンコーダーのCtrl+PageUp/PageDownは維持。
@@ -203,7 +229,7 @@ FUNCTION:  F11  F12  F13   透過  透過
 ```
 
 Fnを離すと右親指(40)はBackspaceへ戻ります。NUMを同時に保持していた場合、N/M/COMMAはNUMの括弧へ戻ります。
-SCROLLを別途保持している間は、UIOとN・P直下キーのポインティング操作をFUNCTIONより優先します。
+SCROLLを別途保持している間は、U保持・I/OクリックとM・P直下キーのポインティング操作をFUNCTIONより優先します。
 
 ## SYSTEM：右手に集約
 
@@ -314,7 +340,7 @@ IME_ALTの残り42位置とsensorは透過です。IME処理には独自Cコー�
 **覚えるのはroBaの送信順であり、PCの現在のIME状態ではありません。**
 他の入力機器や画面操作、アプリごとの状態、接続先変更、再起動後には、既に有効なモードを
 再指定する場合があります。全接続先共通の状態で、再起動で初期化します。起動時にLANGは送信しません。
-実機では同じキーを4回タップして往復を確認し、IME/Shiftホールド、EscのSYSTEMホールド、Tab/NAV、A＋SではLANGが出ないことを確認します。
+実機では同じキーを4回タップして往復を確認し、IME/Shiftホールド、EscのSYSTEMホールド、変換/NAV、A＋SではLANGが出ないことを確認します。
 
 ```text
 BASE0 < IME_ALT1 < MOUSE2 < MOUSE_HOLD3 < SLOW4 < NUM5 < NAV6 < FUNCTION7 < SCROLL8 < SYSTEM9
@@ -322,13 +348,12 @@ BASE0 < IME_ALT1 < MOUSE2 < MOUSE_HOLD3 < SLOW4 < NUM5 < NAV6 < FUNCTION7 < SCRO
 
 番号はkeymapの定義・レイヤー順・trackball・listenerで合わせています。
 SYSTEMを保持中は管理操作が最優先です。S+D=Tab、D+F=Shift+Tab、A+S=MOUSE解除、
-C+V=等号はBASE/IME_ALT/MOUSE/MOUSE_HOLD/SLOWに限定します。L+引用符=ダブルクォートだけはBASE/IME_ALTに限定し、
-位置21の低速操作と競合させません。J＋Kのマウス入口もBASE/IME_ALT限定です。
-NUM/NAV/FUNCTION/SCROLL/SYSTEMでは発動しないため、記号や移動/Fキーを奪いません。
+C+V=等号はBASE/IME_ALT/MOUSE/MOUSE_HOLD/SLOWに限定します。L+引用符=ダブルクォートはBASE/IME_ALT限定です。
+J+K=中クリックはMOUSE/MOUSE_HOLD/SLOW/SCROLL限定で、上位NUM/NAV/FUNCTION/SYSTEMの入力を奪いません。
 
-過去のレイヤー追加では番号が変わっていますが、今回のU/SLOW/コンボ追加では番号を変えていません。
-ZMK Studioの保存済みkeymap、特に旧Mのlt/moと新しいshared_moを混在させず、
-必要な設定を控えてstock keymapと照合してください。settings_resetやペアリング消去を自動実行しません。
+今回の配置修正ではレイヤー番号を変えていません。
+ZMK Studioの保存済みkeymapがある場合は内容を控え、U/M/N/親指39を新しいstockと照合してください。
+撤去したshared_moを使う保存設定をそのまま残さないでください。settings_resetやペアリング消去を自動実行しません。
 
 根拠: [MicrosoftのLANG対応](https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/keyboard-japan-ime)、
 [ZMK LANGキー](https://zmk.dev/docs/keymaps/list-of-keycodes#language)、
@@ -339,7 +364,7 @@ ZMK Studioの保存済みkeymap、特に旧Mのlt/moと新しいshared_moを混�
 **キー割り当てだけの変更は、通常は右手の `roBa_R-seeeduino_xiao_ble-zmk.uf2` だけを書き込めば反映されます。**
 このroBaでは [Kconfig.defconfig](boards/shields/roBa/Kconfig.defconfig) が右側を
 `ZMK_SPLIT_ROLE_CENTRAL=y` にしており、左手のキーも右側でキーマップ処理します。
-左親指のTabやShiftの変更だから左側だけを更新する、という意味ではありません。
+左親指の変換やShiftの変更だから左側だけを更新する、という意味ではありません。
 
 初回導入、左右通信仕様やZMKバージョンを変える更新、左右それぞれのハードウェア設定変更では
 左右に対応したファームウェアを更新してください。キー割り当ての変更とは区別します。
@@ -361,21 +386,20 @@ python3 -m unittest discover -s tests -v
 python3 -m compileall -q tests
 ```
 
-10層×43位置、全512層集合、IME/Shiftの分離、通常ZとTab/NAV、LANG送信順、NAV上段の無入力、NとP直下キーの組合せと解放順、MOUSEタイムアウト時の
-参照先、XY/scroll scaler設定、設定操作の右手集約、JISの専用記号・Shift組合せの送信コード・記号コンボ・Fキーを検査します。
+10層×43位置、全512層集合、IME/Shiftの分離、通常Zと変換/NAV、LANG送信順、NAV上段の無入力、MとP直下キーの組合せと解放順、MOUSEタイムアウト時の
+参照先、Iクリック・J+K中クリックの層制限、XY/scroll scaler設定、設定操作の右手集約、JISの記号・Shift・Fキーを検査します。
 **キーマップ検査はマクロを展開する静的モデルです。時間判定のCテストも、ZMKヘッダ・実HID・タイマー・ホストの出力・
 物理的な操作感を検証するものではありません。** 実機の速度・スクロール量・連打・解放順は未検証です。
 
 予約・期限のテストでは、打鍵後の予約取消し、古い期限後の延長、手動保持、全43位置の除外判定など19項目を確認します。
 単独実行は `python3 tests/bug/temp_layer_pending.py` です。実際のZephyrスケジューラやHIDを実行する試験ではありません。
 以前の上流ソース専用の不具合再現はGit履歴に残し、現在のテストは修正後の本番経路を対象とします。
-[共有保持テスト](tests/test_shared_layer.py)は本番behaviorのCを直接コンパイルし、U/M/仮想コンボの押下・解放順36通り、
-別レイヤーの保持、余分な解放を検査します。周辺APIはモデルなので、実際のhold-tap/コンボのイベント列やHIDの試験ではありません。
+廃止した共有保持behaviorの専用テストは撤去し、UだけがMOUSE_HOLDへ入ることを配置テストで確認します。
 
 正規firmware buildは [.github/workflows/build.yml](.github/workflows/build.yml)、図は既存の
 [Draw Keymap](.github/workflows/draw.yml)です。keymap/配置JSON/描画設定の入力変更をpushすると、
 同じブランチへ `keymap-drawer/roBa.{yaml,svg}` を生成・コミットします。
-`keymap_drawer.config.yaml` の標準 `raw_binding_map` でJISの記号とShift側を表示します。
+`keymap_drawer.config.yaml` の標準 `raw_binding_map` でJISの記号とShift側、変換/NAVを表示します。
 別名はkeymapと同じプリプロセッサで解決するため、US名の誤ったラベルを表示しません。
 生成物自体は入力トリガーではなく、描画を再帰起動しません。別の生成経路や手編集した図は追加しません。
 成功したSHA、実行結果と検証限界はIssue/PRで追跡できます。

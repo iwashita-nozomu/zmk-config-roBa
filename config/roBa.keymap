@@ -40,12 +40,12 @@
 #define L_SYSTEM  9
 
 // All pointing layers share controls; manual holds outlive automatic MOUSE.
-// Only the automatic layer has a timeout; MOUSE_HOLD is shared by U/M holds and the J+K combo.
+// U holds MOUSE_HOLD, I/O click, J+K middle-click, M scrolls, and 21 slows.
 #define AUTOMOUSE_PROCESSOR &mouse_dwell L_MOUSE 1000
 #define POINTING_BINDINGS \
-    &trans  &trans  &trans  &trans  &trans  &kp LC(C)  &mkp MB1  &mkp MB3  &mkp MB2  &kp LC(V) \
-    &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo L_SLOW \
-    &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo L_SCROLL  &shared_mo L_MOUSE_HOLD  &trans  &trans  &trans \
+    &trans  &trans  &trans  &trans  &trans  &kp LC(C)  &mo L_MOUSE_HOLD  &mkp MB1  &mkp MB2  &kp LC(V) \
+    &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &none  &none  &trans  &mo L_SLOW \
+    &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo L_SCROLL  &trans  &trans  &trans \
     &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
 
 &mt {
@@ -78,19 +78,18 @@
         dwell-ms = <200>;
         max-gap-ms = <80>;
         require-prior-idle-ms = <300>;
-        // Click/copy/paste, slow, scroll, manual mouse, and modifier positions.
-        excluded-positions = <5 6 7 8 9 21 29 30 34 35 36 37>;
+        // Pointer controls, including raw J/K before combo recognition.
+        excluded-positions = <5 6 7 8 9 18 19 21 30 34 35 36 37>;
     };
 
     combos {
         compatible = "zmk,combos";
 
-        enter_mouse {
+        middle_click {
             timeout-ms = <50>;
             key-positions = <18 19>;
-            layers = <L_BASE L_IME_ALT>;
-            bindings = <&shared_mo L_MOUSE_HOLD>;
-            slow-release;
+            layers = <L_MOUSE L_MOUSE_HOLD L_SLOW L_SCROLL>;
+            bindings = <&mkp MB3>;
         };
 
         tab {
@@ -126,21 +125,6 @@
     };
 
     behaviors {
-        shared_mo: shared_momentary_layer {
-            compatible = "zmk,behavior-shared-momentary-layer";
-            #binding-cells = <1>;
-            display-name = "Shared Momentary Layer";
-        };
-
-        // Match N's standard layer-tap decision; share only the hold ownership.
-        mouse_lt: mouse_layer_tap {
-            compatible = "zmk,behavior-hold-tap";
-            #binding-cells = <2>;
-            flavor = "tap-preferred";
-            tapping-term-ms = <200>;
-            bindings = <&shared_mo>, <&kp>;
-        };
-
         // A chord selects Shift; only a standalone tap changes IME/MOUSE state.
         ime_shift: ime_shift {
             compatible = "zmk,behavior-hold-tap";
@@ -173,13 +157,13 @@
         compatible = "zmk,keymap";
 
         BASE {
-            // Left thumb: IME/Shift, Space/NUM, Tab/NAV.
+            // Left thumb: IME/Shift, Space/NUM, conversion (Space)/NAV.
             // Right thumb: Backspace and Enter/FUNCTION; bottom-right: Esc/SYSTEM.
             bindings = <
-&kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &mouse_lt L_MOUSE_HOLD U  &kp I      &kp O    &kp P
+&kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &lt L_MOUSE_HOLD U  &kp I      &kp O    &kp P
 &kp A             &kp S         &kp D         &kp F                   &kp G        &kp LS(LG(S))    &kp MINUS  &kp H        &kp J  &kp K      &kp L    &lt L_SLOW JP_SQT
-&kp Z            &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &lt L_SCROLL N        &mouse_lt L_MOUSE_HOLD M  &kp COMMA  &kp DOT  &kp SLASH
-&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_shift LEFT_SHIFT LANG1  &lt L_NUM SPACE  &lt L_NAV TAB  &kp BACKSPACE  &lt L_FN ENTER                     &lt L_SYSTEM ESCAPE
+&kp Z            &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &kp N        &lt L_SCROLL M  &kp COMMA  &kp DOT  &kp SLASH
+&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_shift LEFT_SHIFT LANG1  &lt L_NUM SPACE  &lt L_NAV SPACE  &kp BACKSPACE  &lt L_FN ENTER                     &lt L_SYSTEM ESCAPE
             >;
 
             sensor-bindings = <&inc_dec_kp PG_UP PAGE_DOWN>;
@@ -200,7 +184,7 @@
             bindings = <POINTING_BINDINGS>;
         };
 
-        // Independent of the automatic timeout; released after the last manual hold.
+        // Independent of the automatic timeout; released with the U hold.
         MOUSE_HOLD {
             bindings = <POINTING_BINDINGS>;
         };

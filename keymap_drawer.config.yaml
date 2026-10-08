@@ -2,9 +2,7 @@
 # raw_binding_map keys are preprocessed with config/roBa.keymap; no keycode copy.
 parse_config:
   raw_binding_map:
-    "&mouse_lt L_MOUSE_HOLD U": {"t": "U", "h": "MOUSE_HOLD"}
-    "&mouse_lt L_MOUSE_HOLD M": {"t": "M", "h": "MOUSE_HOLD"}
-    "&shared_mo L_MOUSE_HOLD": "MOUSE_HOLD"
+    "&lt L_NAV SPACE": {"t": "Convert", "h": "NAV"}
     "&lt L_SLOW JP_SQT": {"t": "'", "h": "SLOW"}
     "&ime_toggle LANG1": "IME ON"
     "&ime_toggle LANG2": "IME OFF"
