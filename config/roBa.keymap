@@ -54,15 +54,9 @@
 };
 
 &trackball {
-    // Disable the driver timer: standard temp-layer is the sole automatic owner.
+    // Disable the driver timer: motion_dwell is the sole automatic owner.
     automouse-layer = <0>;
     scroll-layers = <L_SCROLL>;
-};
-
-&zip_temp_layer {
-    require-prior-idle-ms = <300>;
-    // Click/copy/paste, slow, scroll, manual mouse, and modifier positions.
-    excluded-positions = <5 6 7 8 9 21 29 30 34 35 36 37>;
 };
 
 // This listener is enabled only on the pointing (right) half by its overlay.
@@ -80,10 +74,12 @@
     mouse_dwell: mouse_dwell {
         compatible = "zmk,input-processor-motion-dwell";
         #input-processor-cells = <2>;
-        delegate = <&zip_temp_layer>;
         manual-layer = <L_MOUSE_HOLD>;
         dwell-ms = <200>;
         max-gap-ms = <80>;
+        require-prior-idle-ms = <300>;
+        // Click/copy/paste, slow, scroll, manual mouse, and modifier positions.
+        excluded-positions = <5 6 7 8 9 21 29 30 34 35 36 37>;
     };
 
     combos {

@@ -131,13 +131,24 @@ MOUSE中のYUIOP・N・引用符・Mから文字入力を始める場合は、�
 NUM/NAV/FUNCTION/SYSTEMやIME送信順は消しません。保持中のMOUSE_HOLD/SCROLL/SLOWも残るため、
 文字入力に完全に戻る際はM/N/低速キーを離してください。全層を消す `&to 0` は使いません。
 
-自動制御はZMK標準 `zip_temp_layer` に一本化し、PMW3610側の `automouse-layer` は0で無効化しています。
-不要になったドライバの自動解除時間・移動しきい値の設定も撤去しています。
-標準にない継続時間判定だけを [motion_dwell.c](src/motion_dwell.c) で補い、public input-processor APIで
-標準処理へ渡します。移動が途切れたとき、キーコード押下時、レイヤー変化時に継続判定をやり直します。
-低速overrideも同じ入口をスケーラーの前に通し、timeout値はkeymapの `AUTOMOUSE_PROCESSOR` に一度だけ定義します。
+自動MOUSEの継続判定・入力休止・取消し・保持期限は [motion_dwell.c](src/motion_dwell.c) が一括管理します。
+PMW3610側の `automouse-layer=0` と、不要になったドライバの自動設定の撤去は維持します。
+標準 `zip_temp_layer` への委譲は廃止し、自動制御を二重に動かしません。速度変換と手動レイヤーはZMK標準のままです。
 
-根拠: [ZMK Temporary Layer](https://zmk.dev/docs/keymaps/input-processors/temp-layer)。
+遅延処理は過去のON/OFF要求をキューに積まず、1つのZephyr delayable workで**現在の要求と最新の期限**を確認します。
+通常キーの押下は、既に有効な自動MOUSEだけでなく、まだ実行していない有効化要求も取り消します。
+有効化する時点でも入力休止とM保持を確認し、取消し後に時間だけが経過しても復活させません。
+古いタイムアウト処理が残っていても、ボール操作で延長された最新期限より前なら解除せず、残り時間に再設定します。
+状態確認と変更は同じ再入可能なmutex内で行い、同期的なレイヤー通知にも対応します。
+
+コンボやhold-tapが押下を捕捉する前に取消しを処理するため、CMakeでこのlistenerを `app` の先頭側へ登録します。
+A＋Sのように文字キーコードを送らない操作でも予約を取り消せます。キーイベントそのものは消費しません。
+移動が途切れたとき、キーコード押下時、レイヤー変化時に継続判定をやり直します。
+低速overrideも同じ入口をスケーラーの前に通し、1000msはkeymapの `AUTOMOUSE_PROCESSOR` に一度だけ定義します。
+200/80/300/1000ms、除外位置、キーマップとレイヤー番号はこの修正では変更していません。
+
+根拠: [Zephyr Work Queues](https://docs.zephyrproject.org/latest/kernel/services/threads/workqueue.html)。
+再スケジュールしても既にキューに入ったworkは取り消されないため、取消しフラグと最新期限を実行時の判断基準にします。
 
 ### ターミナルでのCtrl+C/V
 
@@ -327,6 +338,9 @@ NUM/NAV/FUNCTION/SCROLL/SYSTEMでは発動しないため、記号や移動/Fキ
 
 既存の構造回帰はPython 3と `cpp` で実行します。継続時間の境界は同じ入口からCコンパイラ `cc` で
 [本番の判定関数](src/motion_dwell.h)を直接コンパイル・実行します（`CC`で指定可能）。
+同じ入口から [予約・期限の回帰テスト](tests/bug/temp_layer_pending.py) も実行します。
+このテストは本番 `motion_dwell.c` を書き換えずコンパイルし、Zephyrの周辺APIだけを順序制御モデルへ置換します。
+POSIXスレッドの再入可能mutexとUndefinedBehaviorSanitizerに対応するCコンパイラが必要です。
 
 ```sh
 python3 -m unittest discover -s tests -v
@@ -337,6 +351,10 @@ python3 -m compileall -q tests
 参照先、XY/scroll scaler設定、設定操作の右手集約、JISの専用記号・Shift組合せの送信コード・記号コンボ・Fキーを検査します。
 **キーマップ検査はマクロを展開する静的モデルです。時間判定のCテストも、ZMKヘッダ・実HID・タイマー・ホストの出力・
 物理的な操作感を検証するものではありません。** 実機の速度・スクロール量・連打・解放順は未検証です。
+
+予約・期限のテストでは、打鍵後の予約取消し、古い期限後の延長、手動保持、全43位置の除外判定など19項目を確認します。
+単独実行は `python3 tests/bug/temp_layer_pending.py` です。実際のZephyrスケジューラやHIDを実行する試験ではありません。
+以前の上流ソース専用の不具合再現はGit履歴に残し、現在のテストは修正後の本番経路を対象とします。
 
 正規firmware buildは [.github/workflows/build.yml](.github/workflows/build.yml)、図は既存の
 [Draw Keymap](.github/workflows/draw.yml)です。keymap/配置JSON/描画設定の入力変更をpushすると、

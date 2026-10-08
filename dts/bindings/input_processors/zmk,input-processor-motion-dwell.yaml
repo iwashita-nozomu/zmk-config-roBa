@@ -1,12 +1,8 @@
-description: Qualify sustained XY motion before calling the standard temporary-layer processor
+description: Enable an automatic layer after sustained XY motion, with cancellable requests and an idle deadline
 compatible: "zmk,input-processor-motion-dwell"
 include: ip_two_param.yaml
 
 properties:
-  delegate:
-    type: phandle
-    required: true
-    description: Standard temporary-layer processor receiving the layer and timeout parameters
   manual-layer:
     type: int
     required: true
@@ -19,3 +15,11 @@ properties:
     type: int
     required: true
     description: A larger gap between nonzero samples starts a new run
+  require-prior-idle-ms:
+    type: int
+    required: true
+    description: Minimum time after the last keycode press before automatic activation
+  excluded-positions:
+    type: array
+    required: true
+    description: Positions that preserve active automatic ownership when pressed

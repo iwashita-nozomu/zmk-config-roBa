@@ -11,6 +11,7 @@ import tempfile
 from pathlib import Path
 import re
 import subprocess
+import sys
 import unittest
 
 
@@ -455,9 +456,13 @@ class KeymapTests(unittest.TestCase):
         self.assertNotIn("lt_ime", EXPANDED)
 
 
-    def test_automatic_entry_uses_one_standard_owner_after_dwell(self):
+    def test_automatic_entry_uses_one_owner_after_dwell(self):
         self.assertIn("automouse-layer = <0>;", EXPANDED)
-        self.assertIn("delegate = <&zip_temp_layer>;", EXPANDED)
+        self.assertNotIn("zip_temp_layer", EXPANDED)
+        self.assertNotIn("delegate =", EXPANDED)
+        cmake = (Path(__file__).resolve().parents[1] / "CMakeLists.txt").read_text()
+        self.assertIn("target_sources_ifdef(CONFIG_PMW3610 app PRIVATE", cmake)
+        self.assertNotIn("zephyr_library", cmake)
         self.assertIn("manual-layer = <3>;", EXPANDED)
         self.assertIn("dwell-ms = <200>;", EXPANDED)
         self.assertIn("max-gap-ms = <80>;", EXPANDED)
@@ -485,7 +490,7 @@ class KeymapTests(unittest.TestCase):
         for name in ("MOUSE", "MOUSE_HOLD", "SLOW", "SCROLL"):
             self.assertEqual(LAYERS[name], LAYERS["MOUSE"])
             self.assertEqual(LAYERS[name][30], "&mo 3")
-        # The standard timer controls layer 2, never the momentary layer 3.
+        # The automatic owner controls layer 2, never the momentary layer 3.
         active = {"BASE", "MOUSE", "MOUSE_HOLD"}
         active.remove("MOUSE")
         self.assertEqual([resolve(active, p) for p in range(5, 10)], MOUSE_KEYS)
@@ -504,6 +509,11 @@ class KeymapTests(unittest.TestCase):
             subprocess.run([os.environ.get("CC", "cc"), "-std=c11", "-Wall", "-Wextra", "-Werror",
                             "-pedantic", str(root / "tests/motion_dwell.c"), "-o", str(exe)], check=True)
             subprocess.run([str(exe)], check=True)
+
+    def test_production_mouse_lifecycle_pending_requests(self):
+        root = Path(__file__).resolve().parents[1]
+        subprocess.run([sys.executable, "-B", str(root / "tests/bug/temp_layer_pending.py")],
+                       check=True)
 
 if __name__ == "__main__":
     unittest.main()
