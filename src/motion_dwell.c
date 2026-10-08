@@ -12,7 +12,7 @@
 #include "motion_dwell.h"
 
 /* One trackball, one automatic owner. Work reconciles current state, never a
- * queued ON/OFF command. MOUSE_HOLD remains owned by the standard momentary key. */
+ * queued ON/OFF command. MOUSE_HOLD remains owned by the manual keys and combos. */
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1);
 BUILD_ASSERT(DT_INST_PROP(0, dwell_ms) > 0);
 BUILD_ASSERT(DT_INST_PROP(0, max_gap_ms) > 0);
