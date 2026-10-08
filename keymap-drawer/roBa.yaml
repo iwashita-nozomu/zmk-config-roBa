@@ -7,7 +7,7 @@ layers:
   - R
   - T
   - Y
-  - U
+  - {t: U, h: MOUSE_HOLD}
   - I
   - O
   - P
@@ -22,7 +22,7 @@ layers:
   - J
   - K
   - L
-  - ''''
+  - {t: '''', h: SLOW}
   - Z
   - X
   - C
@@ -163,7 +163,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - SCROLL
-  - {t: MOUSE_HOLD, type: held}
+  - MOUSE_HOLD
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -441,6 +441,9 @@ layers:
   - {t: ▽, type: trans}
   - {type: held}
 combos:
+- p: [18, 19]
+  k: MOUSE_HOLD
+  l: [BASE, IME_ALT]
 - p: [11, 12]
   k: TAB
   l: [BASE, IME_ALT, MOUSE, MOUSE_HOLD, SLOW]
