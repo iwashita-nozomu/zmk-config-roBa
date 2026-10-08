@@ -40,7 +40,7 @@ layers:
   - LEFT ALT
   - {t: IME ON, h: LEFT SHIFT}
   - {t: SPACE, h: NUM}
-  - {t: Convert, h: NAV}
+  - {t: HENKAN, h: NAV}
   - BACKSPACE
   - {t: ENTER, h: FUNCTION}
   - {t: ESCAPE, h: SYSTEM}
