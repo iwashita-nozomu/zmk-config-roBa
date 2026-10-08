@@ -157,13 +157,13 @@
         compatible = "zmk,keymap";
 
         BASE {
-            // Left thumb: IME/Shift, Space/NUM, conversion (Space)/NAV.
+            // Left thumb: IME/Shift, Space/NUM, HENKAN/NAV.
             // Right thumb: Backspace and Enter/FUNCTION; bottom-right: Esc/SYSTEM.
             bindings = <
 &kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &lt L_MOUSE_HOLD U  &kp I      &kp O    &kp P
 &kp A             &kp S         &kp D         &kp F                   &kp G        &kp LS(LG(S))    &kp MINUS  &kp H        &kp J  &kp K      &kp L    &lt L_SLOW JP_SQT
 &kp Z            &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &kp N        &lt L_SCROLL M  &kp COMMA  &kp DOT  &kp SLASH
-&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_shift LEFT_SHIFT LANG1  &lt L_NUM SPACE  &lt L_NAV SPACE  &kp BACKSPACE  &lt L_FN ENTER                     &lt L_SYSTEM ESCAPE
+&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_shift LEFT_SHIFT LANG1  &lt L_NUM SPACE  &lt L_NAV INT_HENKAN  &kp BACKSPACE  &lt L_FN ENTER                     &lt L_SYSTEM ESCAPE
             >;
 
             sensor-bindings = <&inc_dec_kp PG_UP PAGE_DOWN>;

@@ -59,7 +59,7 @@ class KeymapTests(unittest.TestCase):
             6: "&lt 3 U", 21: "&lt 4 LS(NUMBER_7)", 7: "&kp I", 16: "&kp MINUS", 17: "&kp H",
             29: "&kp N", 30: "&lt 8 M",
             37: "&ime_shift LEFT_SHIFT LANG1", 38: "&lt 5 SPACE",
-            39: "&lt 6 SPACE", 40: "&kp BACKSPACE",
+            39: "&lt 6 INT_HENKAN", 40: "&kp BACKSPACE",
             41: "&lt 7 ENTER", 42: "&lt 9 ESCAPE",
         }
         for position, binding in expected.items():
@@ -67,7 +67,7 @@ class KeymapTests(unittest.TestCase):
                 self.assertEqual(LAYERS["BASE"][position], binding)
 
     def test_single_ime_toggle_replaces_both_legacy_ime_keys(self):
-        self.assertNotRegex(EXPANDED, r"INT_(?:HENKAN|MUHENKAN)|LC\(SPACE\)|LANG5\b")
+        self.assertNotRegex(EXPANDED, r"INT_MUHENKAN|LC\(SPACE\)|LANG5\b")
         ime_positions = [
             (name, pos) for name, keys in LAYERS.items()
             for pos, binding in enumerate(keys) if "&ime_shift" in binding
@@ -76,8 +76,8 @@ class KeymapTests(unittest.TestCase):
         self.assertEqual(LAYERS["IME_ALT"][37], "&ime_shift LEFT_SHIFT LANG2")
         self.assertEqual(LAYERS["BASE"][37], "&ime_shift LEFT_SHIFT LANG1")
         self.assertEqual(LAYERS["BASE"][38], "&lt 5 SPACE")
-        self.assertEqual(LAYERS["BASE"][39], "&lt 6 SPACE")
-        # Conversion is Space-based, separate from the LANG toggle and SYSTEM.
+        self.assertEqual(LAYERS["BASE"][39], "&lt 6 INT_HENKAN")
+        # Dedicated HENKAN is separate from the LANG toggle and SYSTEM.
         self.assertNotIn("lt_ime", EXPANDED)
 
     def test_thumb_ime_and_nav_survive_all_layer_combinations(self):
@@ -86,7 +86,7 @@ class KeymapTests(unittest.TestCase):
             with self.subTest(active=sorted(active)):
                 code = "LANG2" if "IME_ALT" in active else "LANG1"
                 self.assertEqual(resolve(active, 37), f"&ime_shift LEFT_SHIFT {code}")
-                self.assertEqual(resolve(active, 39), "&lt 6 SPACE")
+                self.assertEqual(resolve(active, 39), "&lt 6 INT_HENKAN")
 
     def test_ime_bit_is_transparent_to_other_keys_and_sensors(self):
         self.assertEqual(
@@ -149,7 +149,8 @@ class KeymapTests(unittest.TestCase):
         self.assertNotIn("&mt LEFT_SHIFT Z", EXPANDED)
 
     def test_nav_conversion_keeps_space_num_and_momentary_hold(self):
-        self.assertIn("&lt L_NAV SPACE", SOURCE)
+        self.assertIn("&lt L_NAV INT_HENKAN", SOURCE)
+        self.assertNotIn("&lt L_NAV SPACE", SOURCE)
         self.assertNotIn("&lt L_NAV TAB", SOURCE)
         self.assertNotIn("&mo L_NAV", SOURCE)
         # Use the existing standard layer-tap; do not change other layer-tap timing.
@@ -157,10 +158,21 @@ class KeymapTests(unittest.TestCase):
         for flags in itertools.product((False, True), repeat=len(LAYER_NAMES) - 1):
             active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
             self.assertEqual(resolve(active, 38), "&lt 5 SPACE")
-            self.assertEqual(resolve(active, 39), "&lt 6 SPACE")
+            self.assertEqual(resolve(active, 39), "&lt 6 INT_HENKAN")
         for name, code in (("tab", "TAB"), ("shift_tab", "LS(TAB)")):
             body = re.search(rf"(?s)\b{name}\s*\{{(.*?)\}};", EXPANDED)[1]
             self.assertIn(f"bindings = <&kp {code}>;", body)
+
+    def test_henkan_is_a_dedicated_usage_not_space_or_ime_toggle(self):
+        bindings = [(name, p, key) for name, keys in LAYERS.items()
+                    for p, key in enumerate(keys) if "INT_HENKAN" in key]
+        self.assertEqual(bindings, [("BASE", 39, "&lt 6 INT_HENKAN")])
+        self.assertEqual(LAYERS["BASE"][38], "&lt 5 SPACE")
+        macro = re.search(r"(?s)ime_toggle:\s*\w+\s*\{(.*?)\};", EXPANDED)[1]
+        self.assertNotIn("INT_HENKAN", macro)
+        self.assertNotIn("SPACE", macro)
+        drawer = (Path(__file__).resolve().parents[1] / "keymap_drawer.config.yaml").read_text()
+        self.assertIn('"&lt L_NAV INT_HENKAN": {"t": "HENKAN", "h": "NAV"}', drawer)
 
     def test_num_digits_use_shiftable_number_row_codes(self):
         positions = (22, 23, 24, 25, 11, 12, 13, 1, 2, 3)  # 0..9
@@ -273,7 +285,7 @@ class KeymapTests(unittest.TestCase):
         self.assertEqual(
             resolve({"BASE", "MOUSE"}, 37), "&ime_shift LEFT_SHIFT LANG1"
         )
-        self.assertEqual(resolve({"BASE", "MOUSE"}, 39), "&lt 6 SPACE")
+        self.assertEqual(resolve({"BASE", "MOUSE"}, 39), "&lt 6 INT_HENKAN")
         self.assertEqual(resolve({"BASE", "MOUSE"}, 42), "&lt 9 ESCAPE")
 
     def test_mouse_exit_keeps_manual_layers_in_lookup_model(self):

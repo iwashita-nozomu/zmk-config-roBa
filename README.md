@@ -19,7 +19,7 @@ PR公開やビルド成功は実機への適用とは別です。書き込み後
 | --- | --- | --- |
 | 左親指、Space左 (37) | IME切替＋MOUSE解除 | Shift |
 | Space (38) | Space | NUM |
-| 左親指、Space右・旧Tab (39) | かな漢字変換（Space相当） | NAV、離すと解除 |
+| 左親指、Space右・旧Tab (39) | 変換（INT_HENKAN） | NAV、離すと解除 |
 | 右親指Backspace (40) | Backspace | FUNCTION中だけDelete |
 | 右親指Enter (41) | Enter | FUNCTION |
 | 右下Esc (42) | Esc | SYSTEM |
@@ -61,16 +61,59 @@ Shift+Tabには既存のD+Fコンボも使えます。
 
 ### 左親指の変換とTab
 
-**旧Tab位置(39)のタップは、入力中のかなを変換するSpaceです。保持NAVは残します。**
-Mac日本語入力とWindows Microsoft IMEに共通のかな漢字変換・候補操作を使うため、
-専用のJIS `INT_HENKAN` やLANG切替は送信しません。未変換文字がないときは通常の空白です。
-確定済み文字の再変換を専用HENKANキーと同じ方法で行う機能ではありません。
-実際の候補操作はIMEの設定・入力状態に従い、ファームウェアはホストのIME状態を推定しません。
+**旧Tab位置(39)のタップは、専用の変換キー `INT_HENKAN` です。保持NAVは残します。**
+Spaceによる代用はしません。親指38のSpace/NUMと、親指37のLANG切替/Shiftとは別の入力です。
+短く押して離したときにHENKANを送り、200msの保持判定が成立するとNAVへ入り、HENKANは送りません。
+そのため、この兼用キーを押し続けてHENKANをリピートする使い方にはなりません。
+実際の変換・再変換はホストOS・IME・再割り当て設定に依存し、macOS/Karabinerを含む実機では未検証です。
+JIS記号の出力成功だけでは、専用HENKANの対応まで確認したことにはなりません。Spaceへの自動代替も行いません。
 
 Tabは既存のS+D、Shift+TabはD+Fに残ります。J+Kは変換やマウス入口ではなく、下記の中クリックです。
 
 根拠: [Macの日本語入力](https://support.apple.com/ja-jp/guide/japanese-input-method/jpim10265/6.3/mac/26)、
 [Microsoft日本語IME](https://support.microsoft.com/ja-jp/windows/hardware/input-devices/microsoft-japanese-ime)。
+
+## 時間条件と操作の有効範囲
+
+値は初期調整値のままです。設定時間は入力判定の基準であり、OSまでの応答時間の保証ではありません。
+採用ZMK `acfd8e5` の標準定義・処理と、このリポジトリの本番Cを照合しています。
+
+| 対象 | 時間条件 | 何が有効になるか・終わるか |
+| --- | --- | --- |
+| 通常U/M/引用符、Space/変換/Enter/Esc | layer-tap、200ms、tap-preferred | 短い解放でU/M/引用符/Space/HENKAN/Enter/Esc。保持判定で各レイヤー。別キーの押下だけでは早期holdしない |
+| 親指37のIME/Shift | 200ms、hold-preferred、quick-tap=0 | 200ms保持、または先に37を押した状態で別キーを押すとShift。単独の短い解放だけがLANG切替 |
+| NUMの0/Shift | 200ms、balanced、quick-tap=0 | 200ms保持、または他キーを押して離すまで0を保持するとShift。単なる他キー押下だけでは未決定 |
+| マウス中U/M/引用符 | `mo`、長押し判定なし | 押下で保持開始、解放でその層だけ終了。自動MOUSEの期限から独立 |
+| 全6コンボ | 1キー目から2キー目まで50ms未満 | J+K中クリック、S+D Tab、D+F Shift+Tab、A+S解除、L+引用符、C+V。slow-releaseなし。中ボタンは片方の構成キー解放で解放 |
+| 自動MOUSEへの入口 | 非ゼロXYの継続200ms以上、報告間隔80ms以下、最後のキーコード押下から300ms以上 | 新しいXY報告が条件を満たすと有効化を要求。200msと300msは加算する待ち時間ではない |
+| 自動MOUSEの保持 | 最後に受理した非ゼロXYから1000ms | 最新期限で解除。I/OやJ/Kの押下、クリック、スクロール報告では延長しない |
+| LANGマクロの送信 | wait-ms=0、tap時間は標準30ms | IME/Shiftのタップ決定後にLANGを1回送る。200ms判定と送信時間は別 |
+
+**使い方と境界上の注意**
+
+- **HENKANを長く押すとNAVです。** 変換候補の連打は短いタップで行います。U/M/引用符/Space/Enter/Escも、
+  そのキーを長押しして文字をリピートする配置ではありません。通常Z/N/Backspaceはこの200ms判定を持ちません。
+- **Shift+Zは200ms待ち不要**です。親指37を先に押し、保持中にZを押します。親指を先に離すとIMEタップになります。
+  一方、Uを短く押してIを重ね、200ms未満でUを離す操作は、マウスが別途有効でなければ通常のU/I入力です。
+- **300msは最後の解放からではありません。** 長い文字キー保持やOSのリピートを追跡しないため、キーを保持したままでも
+  300ms経過後の継続XYで自動MOUSEへ入り得ます。A+Sなどキーコードを出さない操作は予約取消し・継続リセットを行いますが、
+  idle時計は更新しません。直後の新しい200msの継続XYで再び有効になる場合があります。
+- **SLOWを離しても自動MOUSEが残る場合があります。** 自動入口を抑止するのはUのMOUSE_HOLDです。
+  SLOWだけの保持中はXYで自動MOUSEも有効になり得ます。SCROLL報告自体は自動期限を延長せず、手動SCROLLは解放まで残ります。
+- **クリックを続けても1秒は更新されません。** ボールを止めて操作を続ける場合はU保持の手動層を使います。
+  自動層が外れた後の新しいI/O押下は文字側になります。既に押下済みのキー／コンボの解放とは分けて考えます。
+- **コンボは「常に現在層を再確認」ではありません。** 1キー目で最高位層から候補を作り、2キー目は位置と期限で絞ります。
+  その50ms未満の間に自動MOUSEが外れても候補が残り、中クリックが成立し得ます。成立後は構成キー解放まで管理されます。
+  数値を長くするだけでは、この層変化をまたぐ性質はなくなりません。
+- **境界ちょうどを狙わないでください。** この版のコンボは差が50msなら失効します。hold-tapは解放時の補正が`>200ms`なので、
+  ちょうど200msの解放はタイマー処理との順序に依存します。自動側の200/80/300ms境界は本番Cで検査していますが、
+  work実行・入力配送・USB/BLE・ホスト処理の遅延まで一定時間に制限するものではありません。
+
+根拠: [採用版hold-tap](https://github.com/zmkfirmware/zmk/blob/acfd8e5ea76cf23ad1c9b6b99848f97a95224257/app/src/behaviors/behavior_hold_tap.c)、
+[採用版combo](https://github.com/zmkfirmware/zmk/blob/acfd8e5ea76cf23ad1c9b6b99848f97a95224257/app/src/combo.c)、
+[自動所有](src/motion_dwell.c)、[継続時間述語](src/motion_dwell.h)。
+これらはソース・本番Cの順序制御モデルに基づく監査です。実機のhold-tap/コンボ/HID/IME結果は未検証で、
+この監査を理由に時間値やマウスの実行コードを変更していません。再現条件と観測は追跡Issue #226に記録します。
 
 ## MOUSE / MOUSE_HOLD / SCROLL / SLOW
 
@@ -107,7 +150,7 @@ Nはマウス中も文字入力に戻れるキーで、スクロールを開始�
 
 ### J＋Kの中クリック
 
-マウス層（MOUSE/MOUSE_HOLD/SLOW/SCROLL）でJ(18)とK(19)を50ms以内に同時押しすると
+マウス層（MOUSE/MOUSE_HOLD/SLOW/SCROLL）でJ(18)とK(19)を50ms未満の間隔で同時押しすると
 中ボタンを押下します。**どちらか一方を離すと中ボタンを解放**する標準コンボです。
 両キーを離すまで保持する `slow-release` や固定トグルは使いません。
 マウス中のJ/K単独は `&none` で、コンボ不成立時に文字を漏らしません。
@@ -203,10 +246,10 @@ WezTerm標準のクリップボード操作はCtrl+Shift+C/V（macOSではComman
 
 ## NAV / FUNCTION
 
-**左親指のSpace右(39)は、タップで変換用Space、ホールド中だけNAVです。**
-Space/NUM(38)は変更していません。NAV入口は `&lt L_NAV SPACE` で、標準layer-tapの
+**左親指のSpace右(39)は、タップで専用変換（HENKAN）、ホールド中だけNAVです。**
+Space/NUM(38)は変更していません。NAV入口は `&lt L_NAV INT_HENKAN` で、標準layer-tapの
 200ms・tap-preferred判定を使います。即時の `&mo` ではないため、矢印操作はホールド判定後に行います。
-保持が成立した後は離してもSpaceを送らず、NAVだけを解除します。
+保持が成立した後は離してもHENKANを送らず、NAVだけを解除します。
 NAV中のH/J/K/Lは左/下/上/右です。
 Y/U/I/O/Pは `&none` で、文字も下位MOUSE/NUMの操作も送りません。
 Home/End、Ctrl+Tab、Ctrl+Shift+Tab、GUI+Shift+左右矢印、エンコーダーのCtrl+PageUp/PageDownは維持。
@@ -330,7 +373,8 @@ std::vector<int> v; f(x[i], {a, b});
 左親指IME (37) はタップごとにLANG1 → LANG2 → LANG1 → … を送ります。初回はLANG1です。
 ShiftホールドではLANGを送らず、送信順も変更しません。
 Windowsの対応する日本語Microsoft IMEでLANG1=ImeOn、LANG2=ImeOff、Mac日本語入力でかな／英数です。
-Ctrl+Spaceは補完用なので送らず、LANG5や旧変換／無変換も送りません。別IMEや再割り当てツールは実機確認が必要です。
+IME切替操作ではCtrl+Space・LANG5・変換／無変換は送りません。親指39の専用HENKAN送信とは独立しています。
+別IMEや再割り当てツールは実機確認が必要です。
 
 BASEの37は `&ime_shift LEFT_SHIFT LANG1`、IME_ALTの37は `&ime_shift LEFT_SHIFT LANG2`。
 ホールドは `&kp LEFT_SHIFT`、タップだけが既存の `&ime_toggle` マクロを呼びます。

@@ -2,7 +2,7 @@
 # raw_binding_map keys are preprocessed with config/roBa.keymap; no keycode copy.
 parse_config:
   raw_binding_map:
-    "&lt L_NAV SPACE": {"t": "Convert", "h": "NAV"}
+    "&lt L_NAV INT_HENKAN": {"t": "HENKAN", "h": "NAV"}
     "&lt L_SLOW JP_SQT": {"t": "'", "h": "SLOW"}
     "&ime_toggle LANG1": "IME ON"
     "&ime_toggle LANG2": "IME OFF"
