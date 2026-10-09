@@ -23,7 +23,7 @@ layers:
   - K
   - L
   - {t: '''', h: SLOW}
-  - Z
+  - {t: Z, h: Shift + 200ms}
   - X
   - C
   - V
@@ -38,7 +38,7 @@ layers:
   - LCTRL
   - LEFT WIN
   - LEFT ALT
-  - {t: IME ON, h: LEFT SHIFT}
+  - IME ON
   - {t: SPACE, h: NUM}
   - {t: HENKAN, h: NAV}
   - BACKSPACE
@@ -82,7 +82,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: IME OFF, h: LEFT SHIFT}
+  - IME OFF
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
