@@ -7,7 +7,7 @@ layers:
   - R
   - T
   - Y
-  - U
+  - {t: U, h: MOUSE_HOLD}
   - I
   - O
   - P
@@ -22,28 +22,28 @@ layers:
   - J
   - K
   - L
-  - ''''
-  - {t: Z, h: LEFT SHIFT}
+  - {t: '''', h: SLOW}
+  - {t: Z, h: Shift + 200ms}
   - X
   - C
   - V
   - B
   - {t: ':', s: '*'}
   - {t: ;, s: +}
-  - {t: N, h: SCROLL}
-  - M
+  - N
+  - {t: M, h: SCROLL}
   - {t: ',', s: <}
   - {t: ., s: '>'}
   - {t: /, s: '?'}
   - LCTRL
   - LEFT WIN
   - LEFT ALT
-  - '&ime_toggle LANG1'
+  - IME ON
   - {t: SPACE, h: NUM}
-  - NAV
-  - {t: ESCAPE, h: SYSTEM}
-  - {t: ENTER, h: FUNCTION}
+  - {t: HENKAN, h: NAV}
   - BACKSPACE
+  - {t: ENTER, h: FUNCTION}
+  - {t: ESCAPE, h: SYSTEM}
   IME_ALT:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -82,7 +82,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - '&ime_toggle LANG2'
+  - IME OFF
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -95,8 +95,8 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - Ctl+C
+  - MOUSE_HOLD
   - '&mkp MB1'
-  - '&mkp MB3'
   - '&mkp MB2'
   - Ctl+V
   - {t: ▽, type: trans}
@@ -107,9 +107,10 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
+  - ''
+  - ''
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - SLOW
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -119,7 +120,50 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - SCROLL
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  MOUSE_HOLD:
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - Ctl+C
+  - {t: MOUSE_HOLD, type: held}
+  - '&mkp MB1'
+  - '&mkp MB2'
+  - Ctl+V
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - ''
+  - ''
+  - {t: ▽, type: trans}
   - SLOW
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - SCROLL
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -139,8 +183,8 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - Ctl+C
+  - MOUSE_HOLD
   - '&mkp MB1'
-  - '&mkp MB3'
   - '&mkp MB2'
   - Ctl+V
   - {t: ▽, type: trans}
@@ -151,9 +195,10 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
+  - ''
+  - ''
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - {t: SLOW, type: held}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -163,7 +208,6 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - SCROLL
-  - {t: SLOW, type: held}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -260,7 +304,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {type: held}
+  - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -305,9 +349,9 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {type: held}
   - DEL
+  - {type: held}
+  - {t: ▽, type: trans}
   SCROLL:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -315,8 +359,8 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - Ctl+C
+  - MOUSE_HOLD
   - '&mkp MB1'
-  - '&mkp MB3'
   - '&mkp MB2'
   - Ctl+V
   - {t: ▽, type: trans}
@@ -327,9 +371,10 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
+  - ''
+  - ''
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - SLOW
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -339,7 +384,6 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: SCROLL, type: held}
-  - SLOW
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -393,22 +437,25 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
   - {type: held}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
 combos:
+- p: [18, 19]
+  k: '&mkp MB3'
+  l: [MOUSE, MOUSE_HOLD, SLOW, SCROLL]
 - p: [11, 12]
   k: TAB
-  l: [BASE, IME_ALT, MOUSE, SLOW]
+  l: [BASE, IME_ALT, MOUSE, MOUSE_HOLD, SLOW]
 - p: [12, 13]
   k: Sft+TAB
-  l: [BASE, IME_ALT, MOUSE, SLOW]
+  l: [BASE, IME_ALT, MOUSE, MOUSE_HOLD, SLOW]
 - p: [11, 10]
   k: '&mouse_off 2'
-  l: [BASE, IME_ALT, MOUSE, SLOW]
+  l: [BASE, IME_ALT, MOUSE, MOUSE_HOLD, SLOW]
 - p: [20, 21]
   k: '"'
-  l: [BASE, IME_ALT, MOUSE, SLOW]
+  l: [BASE, IME_ALT]
 - p: [24, 25]
   k: '='
-  l: [BASE, IME_ALT, MOUSE, SLOW]
+  l: [BASE, IME_ALT, MOUSE, MOUSE_HOLD, SLOW]
