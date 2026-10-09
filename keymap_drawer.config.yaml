@@ -2,6 +2,7 @@
 # raw_binding_map keys are preprocessed with config/roBa.keymap; no keycode copy.
 parse_config:
   raw_binding_map:
+    "&z_shift": {"t": "Z", "h": "Shift + 200ms"}
     "&lt L_NAV INT_HENKAN": {"t": "HENKAN", "h": "NAV"}
     "&lt L_SLOW JP_SQT": {"t": "'", "h": "SLOW"}
     "&ime_toggle LANG1": "IME ON"

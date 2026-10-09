@@ -58,7 +58,7 @@ class KeymapTests(unittest.TestCase):
         expected = {
             6: "&lt 3 U", 21: "&lt 4 LS(NUMBER_7)", 7: "&kp I", 16: "&kp MINUS", 17: "&kp H",
             29: "&kp N", 30: "&lt 8 M",
-            37: "&ime_shift LEFT_SHIFT LANG1", 38: "&lt 5 SPACE",
+            37: "&ime_toggle LANG1", 38: "&lt 5 SPACE",
             39: "&lt 6 INT_HENKAN", 40: "&kp BACKSPACE",
             41: "&lt 7 ENTER", 42: "&lt 9 ESCAPE",
         }
@@ -70,11 +70,11 @@ class KeymapTests(unittest.TestCase):
         self.assertNotRegex(EXPANDED, r"INT_MUHENKAN|LC\(SPACE\)|LANG5\b")
         ime_positions = [
             (name, pos) for name, keys in LAYERS.items()
-            for pos, binding in enumerate(keys) if "&ime_shift" in binding
+            for pos, binding in enumerate(keys) if "&ime_toggle" in binding
         ]
         self.assertEqual(ime_positions, [("BASE", 37), ("IME_ALT", 37)])
-        self.assertEqual(LAYERS["IME_ALT"][37], "&ime_shift LEFT_SHIFT LANG2")
-        self.assertEqual(LAYERS["BASE"][37], "&ime_shift LEFT_SHIFT LANG1")
+        self.assertEqual(LAYERS["IME_ALT"][37], "&ime_toggle LANG2")
+        self.assertEqual(LAYERS["BASE"][37], "&ime_toggle LANG1")
         self.assertEqual(LAYERS["BASE"][38], "&lt 5 SPACE")
         self.assertEqual(LAYERS["BASE"][39], "&lt 6 INT_HENKAN")
         # Dedicated HENKAN is separate from the LANG toggle and SYSTEM.
@@ -85,7 +85,7 @@ class KeymapTests(unittest.TestCase):
             active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
             with self.subTest(active=sorted(active)):
                 code = "LANG2" if "IME_ALT" in active else "LANG1"
-                self.assertEqual(resolve(active, 37), f"&ime_shift LEFT_SHIFT {code}")
+                self.assertEqual(resolve(active, 37), f"&ime_toggle {code}")
                 self.assertEqual(resolve(active, 39), "&lt 6 INT_HENKAN")
 
     def test_ime_bit_is_transparent_to_other_keys_and_sensors(self):
@@ -121,32 +121,67 @@ class KeymapTests(unittest.TestCase):
                 self.assertEqual(active - {"IME_ALT"}, manual)
                 self.assertEqual("IME_ALT" in active, initial ^ bool((count + 1) % 2))
 
-    def test_thumb_shift_and_other_modifiers(self):
+    def test_z_shift_and_other_modifiers(self):
         self.assertEqual(LAYERS["BASE"][34:37], ["&kp LCTRL", "&kp LEFT_WIN", "&kp LEFT_ALT"])
-        self.assertEqual(LAYERS["BASE"][22], "&kp Z")
+        self.assertEqual(LAYERS["BASE"][22], "&z_shift")
         self.assertEqual(LAYERS["NAV"][22], "&kp LEFT_SHIFT")
         self.assertEqual(LAYERS["NUM"][22], "&mt LEFT_SHIFT NUMBER_0")
         self.assertIn('flavor = "balanced";', SOURCE)
         self.assertIn("quick-tap-ms = <0>;", SOURCE)
 
-    def test_ime_shift_separates_hold_from_ime_tap(self):
-        behavior = re.search(r"(?s)ime_shift:\s*\w+\s*\{(.*?)\};", EXPANDED)[1]
-        self.assertIn('compatible = "zmk,behavior-hold-tap";', behavior)
-        self.assertIn('#binding-cells = <2>;', behavior)
-        self.assertIn('flavor = "hold-preferred";', behavior)
-        self.assertIn('tapping-term-ms = <200>;', behavior)
-        self.assertIn('quick-tap-ms = <0>;', behavior)
-        self.assertEqual(re.findall(r"&([a-z_]+)", behavior), ["kp", "ime_toggle"])
-        # These are distinct physical positions: Shift hold and an ordinary Z press.
-        # This checks configuration, not ZMK's hold-tap timer or real HID reports.
+    def test_z_hold_and_one_shot_grace_use_standard_behaviors(self):
+        sticky = re.search(r"(?s)z_sticky:\s*\w+\s*\{(.*?)\};", EXPANDED)[1]
+        hold = re.search(r"(?s)z_hold:\s*\w+\s*\{(.*?)\};", EXPANDED)[1]
+        self.assertIn('compatible = "zmk,behavior-sticky-key";', sticky)
+        self.assertIn('release-after-ms = <200>;', sticky)
+        self.assertIn('quick-release;', sticky)
+        self.assertIn('ignore-modifiers;', sticky)
+        self.assertNotIn('lazy;', sticky)  # Shift must also be visible to mouse clicks.
+        self.assertEqual(re.findall(r"&([a-z_]+)", sticky), ["kp"])
+        self.assertIn('compatible = "zmk,behavior-hold-tap";', hold)
+        self.assertIn('tapping-term-ms = <200>;', hold)
+        self.assertIn('flavor = "tap-preferred";', hold)
+        self.assertIn('quick-tap-ms = <0>;', hold)
+        self.assertEqual(re.findall(r"&([a-z_]+)", hold), ["shift_hold", "z_tap"])
+        self.assertNotIn('ime_shift', SOURCE)
         for flags in itertools.product((False, True), repeat=len(LAYER_NAMES) - 1):
             active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
             code = "LANG2" if "IME_ALT" in active else "LANG1"
-            self.assertEqual(resolve(active, 37), f"&ime_shift LEFT_SHIFT {code}")
+            self.assertEqual(resolve(active, 37), f"&ime_toggle {code}")
             expected = "&kp LEFT_SHIFT" if "NAV" in active else (
-                "&mt LEFT_SHIFT NUMBER_0" if "NUM" in active else "&kp Z")
+                "&mt LEFT_SHIFT NUMBER_0" if "NUM" in active else "&z_shift")
             self.assertEqual(resolve(active, 22), expected)
-        self.assertNotIn("&mt LEFT_SHIFT Z", EXPANDED)
+
+    def test_sticky_grace_is_timed_from_release_not_the_hold_tap_press(self):
+        bridge = re.search(r"(?s)shift_hold:\s*\w+\s*\{(.*?)\};", EXPANDED)[1]
+        self.assertIn('compatible = "zmk,behavior-macro";', bridge)
+        self.assertIn('wait-ms = <0>;', bridge)
+        self.assertRegex(bridge, r"bindings = <&macro_press &z_sticky LEFT_SHIFT\s+"
+                                r"&macro_pause_for_release &macro_release &z_sticky LEFT_SHIFT>;")
+        self.assertNotIn('&macro_tap', bridge)
+
+    def test_shifted_z_bypasses_hold_tap_without_masking_shift(self):
+        morph = re.search(r"(?s)z_shift:\s*\w+\s*\{(.*?)\};", EXPANDED)[1]
+        self.assertIn('compatible = "zmk,behavior-mod-morph";', morph)
+        self.assertIn('bindings = <&z_hold 0 0>, <&z_tap>;', morph)
+        self.assertIn('mods = <(MOD_LSFT | MOD_RSFT)>;', morph)
+        self.assertIn('keep-mods = <(MOD_LSFT | MOD_RSFT)>;', morph)
+        drawer = (Path(__file__).resolve().parents[1] / "keymap_drawer.config.yaml").read_text()
+        self.assertIn('"&z_shift": {"t": "Z", "h": "Shift + 200ms"}', drawer)
+
+    def test_z_typing_exits_only_automatic_mouse_and_preserves_press_release(self):
+        tap = re.search(r"(?s)z_tap:\s*\w+\s*\{(.*?)\};", EXPANDED)[1]
+        self.assertIn('compatible = "zmk,behavior-macro";', tap)
+        self.assertIn('wait-ms = <0>;', tap)
+        self.assertRegex(tap, r"bindings = <&macro_press &mouse_off 2 &kp Z\s+"
+                             r"&macro_pause_for_release &macro_release &kp Z>;")
+        self.assertNotIn('&macro_tap', tap)
+        self.assertNotIn('&tog', tap)
+        excluded = set(map(int, re.search(r"excluded-positions\s*=\s*<(.*?)>", EXPANDED)[1].split()))
+        self.assertIn(22, excluded)  # A Shift hold must not eject the pointing layer.
+        self.assertNotIn(37, excluded)  # Thumb is no longer a modifier.
+        for layer in ("MOUSE", "MOUSE_HOLD", "SLOW", "SCROLL"):
+            self.assertEqual(resolve({"BASE", layer}, 22), "&z_shift")
 
     def test_nav_conversion_keeps_space_num_and_momentary_hold(self):
         self.assertIn("&lt L_NAV INT_HENKAN", SOURCE)
@@ -283,7 +318,7 @@ class KeymapTests(unittest.TestCase):
         ))
         # One IME tap exits MOUSE; A+S exits without sending an IME key.
         self.assertEqual(
-            resolve({"BASE", "MOUSE"}, 37), "&ime_shift LEFT_SHIFT LANG1"
+            resolve({"BASE", "MOUSE"}, 37), "&ime_toggle LANG1"
         )
         self.assertEqual(resolve({"BASE", "MOUSE"}, 39), "&lt 6 INT_HENKAN")
         self.assertEqual(resolve({"BASE", "MOUSE"}, 42), "&lt 9 ESCAPE")
@@ -496,7 +531,7 @@ class KeymapTests(unittest.TestCase):
 
     def test_typing_exit_preserves_the_first_key_and_manual_layers(self):
         excluded = set(map(int, re.search(r"excluded-positions\s*=\s*<(.*?)>", EXPANDED)[1].split()))
-        self.assertEqual(excluded, {5, 6, 7, 8, 9, 18, 19, 21, 30, 34, 35, 36, 37})
+        self.assertEqual(excluded, {5, 6, 7, 8, 9, 18, 19, 21, 22, 30, 34, 35, 36})
         for flags in itertools.product((False, True), repeat=len(LAYER_NAMES) - 1):
             active = {"BASE", "MOUSE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
             for position in set(range(43)) - excluded:
