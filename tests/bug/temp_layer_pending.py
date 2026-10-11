@@ -139,7 +139,9 @@ static void input(int code, int value) {
     assert(driver->handle_event(&mouse_device, &e, AUTO_LAYER, TIMEOUT_MS, &state) == 0);
     assert(e.type == before.type && e.code == before.code && e.value == before.value && e.sync == before.sync);
 }
-static void motion(void) { input(INPUT_REL_X, 1); }
+/* Existing lifecycle cases qualify distance immediately and still test time.
+ * Small reports and distance boundaries are covered explicitly below. */
+static void motion(void) { input(INPUT_REL_X, PROP_min_distance); }
 static void position(uint32_t p, bool down) {
     zmk_event_t e = {.kind=POSITION,.data.pos={p,down,now_ms}};
     assert(zmk_listener_mouse_motion_dwell.callback(&e) == ZMK_EV_EVENT_BUBBLE);
@@ -375,8 +377,54 @@ int main(void) {
     advance(10000); drain(); assert(!active());
     puts("PASS: manual-only release and explicit cancellation cannot create AUTO");
 
+    /* Time-only motion remains in BASE until the exact distance boundary. */
+    reset_test();
+    for (int64_t t=1000; t<=1200; t+=40) { advance(t); input(INPUT_REL_X,1); }
+    drain(); assert(!active()); assert(!mouse.requested);
+    advance(1201); input(INPUT_REL_Y,-(PROP_min_distance-7));
+    drain(); assert(!active());
+    advance(1202); input(INPUT_REL_X,-1); drain(); assert(active());
+    puts("PASS: entry requires cumulative signed X/Y magnitude at the distance boundary");
+
+    reset_test(); input(INPUT_REL_Y,INT32_MIN); drain(); assert(!active());
+    advance(1080); input(INPUT_REL_X,1); advance(1160); input(INPUT_REL_Y,-1);
+    advance(1199); input(INPUT_REL_X,1); drain(); assert(!active());
+    advance(1200); input(INPUT_REL_Y,1); drain(); assert(active());
+    puts("PASS: large motion cannot bypass dwell and INT32_MIN is safe");
+
+    reset_test(); input(INPUT_REL_X,PROP_min_distance);
+    advance(1081); input(INPUT_REL_Y,1);
+    for (int64_t t=1121; t<=1281; t+=40) { advance(t); input(INPUT_REL_X,1); }
+    drain(); assert(!active());
+    puts("PASS: an 81ms gap discards accumulated distance as well as time");
+
+    reset_test(); input(INPUT_REL_X,PROP_min_distance); position(10,true);
+    for (int64_t t=1000; t<=1200; t+=40) { advance(t); input(INPUT_REL_Y,1); }
+    drain(); assert(!active());
+    puts("PASS: raw typing cancels accumulated distance before new motion");
+
+    reset_test(); input(INPUT_REL_X,PROP_min_distance); keycode(now_ms);
+    for (int64_t t=1000; t<=1320; t+=40) { advance(t); input(INPUT_REL_X,1); }
+    drain(); assert(!active());
+    puts("PASS: keycode reset discards distance even after typing idle is satisfied");
+
+    reset_test(); input(INPUT_REL_X,PROP_min_distance); change_layer(4,true);
+    for (int64_t t=1000; t<=1200; t+=40) { advance(t); input(INPUT_REL_X,1); }
+    drain(); assert(!active());
+    puts("PASS: layer changes reset distance while the manual SLOW layer is preserved");
+
+    reset_test(); qualify(); drain(); advance(2199); input(INPUT_REL_Y,-1);
+    advance(3198); drain(); assert(active()); advance(3199); drain(); assert(!active());
+    puts("PASS: one raw count still renews an active session without requalifying distance");
+
+    reset_test(); qualify(); drain(); change_layer(AUTO_LAYER,false);
+    for (int64_t t=1200; t<=1400; t+=40) { advance(t); input(INPUT_REL_X,1); }
+    input(INPUT_REL_WHEEL,INT32_MAX); input(INPUT_REL_HWHEEL,INT32_MIN);
+    drain(); assert(!active());
+    puts("PASS: old entry distance and large wheel reports cannot start a new session");
+
     assert(pthread_mutex_destroy(&mouse_lock.mutex) == 0);
-    puts("RESULT: 36 lifecycle checks passed");
+    puts("RESULT: 44 lifecycle checks passed");
     return 0;
 }
 '''
@@ -395,7 +443,7 @@ def main() -> int:
     )
     node = re.search(r"(?s)mouse_dwell:\s*\w+\s*\{(.*?)\};", expanded)[1]
     props = {}
-    for name in ("manual-layer", "dwell-ms", "max-gap-ms", "require-prior-idle-ms"):
+    for name in ("manual-layer", "dwell-ms", "min-distance", "max-gap-ms", "require-prior-idle-ms"):
         props[name.replace("-", "_")] = int(re.search(rf"{name}\s*=\s*<(\d+)>", node)[1])
     config = "\n".join(f"#define PROP_{key} {value}" for key, value in props.items())
     for name in ("excluded-positions", "activity-positions", "activity-layers"):

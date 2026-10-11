@@ -79,6 +79,9 @@
         activity-layers = <L_MOUSE L_MOUSE_HOLD L_SLOW L_SCROLL>;
         activity-positions = <5 6 7 8 9 18 19 21 30>;
         dwell-ms = <200>;
+        // Entry requires BOTH dwell and summed abs(X/Y), before SLOW scaling.
+        // Initial tuning value in input counts, not screen pixels or millimetres.
+        min-distance = <32>;
         max-gap-ms = <80>;
         require-prior-idle-ms = <300>;
         // Preserve Z until hold/tap resolves: only its typing branch exits MOUSE.

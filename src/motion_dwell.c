@@ -16,6 +16,7 @@
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1);
 BUILD_ASSERT(DT_INST_PROP(0, dwell_ms) > 0);
 BUILD_ASSERT(DT_INST_PROP(0, max_gap_ms) > 0);
+BUILD_ASSERT(DT_INST_PROP(0, min_distance) > 0);
 
 static struct {
     struct motion_dwell run;
@@ -215,7 +216,8 @@ static int handle_motion(const struct device *dev, struct input_event *event,
     } else if (xy && !manual_active()) {
         int64_t now = k_uptime_get();
         bool ready = motion_dwell_update(&mouse.run, now, DT_INST_PROP(0, dwell_ms),
-                                         DT_INST_PROP(0, max_gap_ms));
+                                         DT_INST_PROP(0, max_gap_ms), event->value,
+                                         DT_INST_PROP(0, min_distance));
         if (ready && now - mouse.last_key_ms >= DT_INST_PROP(0, require_prior_idle_ms)) {
             mouse.requested = true;
             mouse.expires_ms = now + timeout_ms;

@@ -11,6 +11,10 @@ properties:
     type: int
     required: true
     description: Minimum duration spanned by a continuous run of nonzero XY samples
+  min-distance:
+    type: int
+    required: true
+    description: Positive minimum sum of absolute X/Y input counts in the same continuous run; required together with dwell-ms for entry only
   max-gap-ms:
     type: int
     required: true
