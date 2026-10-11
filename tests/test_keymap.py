@@ -59,8 +59,8 @@ class KeymapTests(unittest.TestCase):
             6: "&lt 3 U", 21: "&lt 4 LS(NUMBER_7)", 7: "&kp I", 16: "&kp MINUS", 17: "&kp H",
             29: "&kp N", 30: "&lt 8 M",
             37: "&ime_toggle LANG1", 38: "&lt 5 SPACE",
-            39: "&lt 6 INT_HENKAN", 40: "&kp BACKSPACE",
-            41: "&lt 7 ENTER", 42: "&lt 9 ESCAPE",
+            39: "&lt 6 INT_HENKAN", 40: "&lt 7 ENTER",
+            41: "&kp BACKSPACE", 42: "&lt 9 ESCAPE",
         }
         for position, binding in expected.items():
             with self.subTest(position=position):
@@ -265,16 +265,17 @@ class KeymapTests(unittest.TestCase):
         self.assertEqual(len(fkeys), 13)
         self.assertEqual(LAYERS["FUNCTION"][16], "&trans")
         self.assertEqual(LAYERS["FUNCTION"][33], "&trans")
-        self.assertEqual(LAYERS["FUNCTION"][40], "&kp DEL")
+        self.assertEqual(LAYERS["FUNCTION"][41], "&kp DEL")
 
     def test_all_layer_combinations_for_new_presses(self):
         for flags in itertools.product((False, True), repeat=len(LAYER_NAMES) - 1):
             active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
             with self.subTest(active=sorted(active)):
                 self.assertEqual(resolve(active, 42), "&lt 9 ESCAPE")
+                self.assertEqual(resolve(active, 40), "&lt 7 ENTER")
                 expected_delete = "&kp DEL" if "FUNCTION" in active else "&kp BACKSPACE"
-                self.assertEqual(resolve(active, 40), expected_delete)
-                self.assertEqual(resolve(active - {"FUNCTION"}, 40), "&kp BACKSPACE")
+                self.assertEqual(resolve(active, 41), expected_delete)
+                self.assertEqual(resolve(active - {"FUNCTION"}, 41), "&kp BACKSPACE")
                 self.assertEqual(resolve(active - {"SYSTEM"}, 42), "&lt 9 ESCAPE")
                 if "SYSTEM" in active:
                     expected_top = [f"&bt BT_SEL {i}" for i in range(5)]
@@ -294,8 +295,8 @@ class KeymapTests(unittest.TestCase):
     def test_release_removes_only_the_requested_layer_in_lookup_model(self):
         for mouse in (False, True):
             underlying = {"BASE"} | ({"MOUSE"} if mouse else set())
-            self.assertEqual(resolve(underlying | {"FUNCTION"}, 40), "&kp DEL")
-            self.assertEqual(resolve(underlying, 40), "&kp BACKSPACE")
+            self.assertEqual(resolve(underlying | {"FUNCTION"}, 41), "&kp DEL")
+            self.assertEqual(resolve(underlying, 41), "&kp BACKSPACE")
             self.assertEqual(resolve(underlying | {"NAV"}, 17), "&kp LEFT_ARROW")
             self.assertEqual(resolve(underlying, 17), "&kp H")
             expected = MOUSE_KEYS if mouse else LETTERS
@@ -528,6 +529,17 @@ class KeymapTests(unittest.TestCase):
         conf = (Path(__file__).resolve().parents[1] / "boards/shields/roBa/roBa_R.conf").read_text()
         self.assertNotIn("CONFIG_PMW3610_AUTOMOUSE_TIMEOUT_MS", conf)
         self.assertNotIn("CONFIG_PMW3610_MOVEMENT_THRESHOLD", conf)
+
+    def test_activity_positions_match_pointing_controls_not_modifiers(self):
+        positions = set(map(int, re.search(r"activity-positions\s*=\s*<(.*?)>", EXPANDED)[1].split()))
+        layers = tuple(map(int, re.search(r"activity-layers\s*=\s*<(.*?)>", EXPANDED)[1].split()))
+        self.assertEqual(layers, (2, 3, 4, 8))
+        self.assertEqual(positions, {5, 6, 7, 8, 9, 18, 19, 21, 30})
+        excluded = set(map(int, re.search(r"excluded-positions\s*=\s*<(.*?)>", EXPANDED)[1].split()))
+        self.assertTrue(positions <= excluded)
+        for layer in layers:
+            actual = {p for p, binding in enumerate(LAYERS[LAYER_NAMES[layer]]) if binding != "&trans"}
+            self.assertEqual(positions, actual)
 
     def test_typing_exit_preserves_the_first_key_and_manual_layers(self):
         excluded = set(map(int, re.search(r"excluded-positions\s*=\s*<(.*?)>", EXPANDED)[1].split()))

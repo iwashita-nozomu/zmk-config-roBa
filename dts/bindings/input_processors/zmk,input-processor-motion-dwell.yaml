@@ -6,7 +6,7 @@ properties:
   manual-layer:
     type: int
     required: true
-    description: Independently held layer; do not create or renew automatic ownership while held
+    description: Independently held layer; do not create automatic ownership while held
   dwell-ms:
     type: int
     required: true
@@ -23,3 +23,11 @@ properties:
     type: array
     required: true
     description: Positions that preserve active automatic ownership when pressed
+  activity-layers:
+    type: array
+    required: true
+    description: Layer indices whose highest-active controls count as pointer activity
+  activity-positions:
+    type: array
+    required: true
+    description: Pointer control positions that renew and hold an already active automatic layer

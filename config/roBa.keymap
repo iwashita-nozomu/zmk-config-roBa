@@ -76,6 +76,8 @@
         compatible = "zmk,input-processor-motion-dwell";
         #input-processor-cells = <2>;
         manual-layer = <L_MOUSE_HOLD>;
+        activity-layers = <L_MOUSE L_MOUSE_HOLD L_SLOW L_SCROLL>;
+        activity-positions = <5 6 7 8 9 18 19 21 30>;
         dwell-ms = <200>;
         max-gap-ms = <80>;
         require-prior-idle-ms = <300>;
@@ -197,12 +199,12 @@
 
         BASE {
             // Left thumb: IME only, Space/NUM, HENKAN/NAV. Z holds Shift.
-            // Right thumb: Backspace and Enter/FUNCTION; bottom-right: Esc/SYSTEM.
+            // Right thumb: Enter/FUNCTION and Backspace; bottom-right: Esc/SYSTEM.
             bindings = <
 &kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &lt L_MOUSE_HOLD U  &kp I      &kp O    &kp P
 &kp A             &kp S         &kp D         &kp F                   &kp G        &kp LS(LG(S))    &kp MINUS  &kp H        &kp J  &kp K      &kp L    &lt L_SLOW JP_SQT
 &z_shift         &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &kp N        &lt L_SCROLL M  &kp COMMA  &kp DOT  &kp SLASH
-&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_toggle LANG1  &lt L_NUM SPACE  &lt L_NAV INT_HENKAN  &kp BACKSPACE  &lt L_FN ENTER                     &lt L_SYSTEM ESCAPE
+&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_toggle LANG1  &lt L_NUM SPACE  &lt L_NAV INT_HENKAN  &lt L_FN ENTER  &kp BACKSPACE                     &lt L_SYSTEM ESCAPE
             >;
 
             sensor-bindings = <&inc_dec_kp PG_UP PAGE_DOWN>;
@@ -260,7 +262,7 @@
 &trans  &trans  &trans  &trans  &trans                                  &kp F1   &kp F2   &kp F3   &kp F4  &kp F5
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &kp F6   &kp F7   &kp F8   &kp F9  &kp F10
 &trans  &trans  &trans  &trans  &trans  &trans      &trans        &kp F11  &kp F12  &kp F13  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans      &kp DEL       &trans                               &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans        &kp DEL                              &trans
             >;
         };
 

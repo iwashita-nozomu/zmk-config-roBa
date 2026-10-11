@@ -61,6 +61,7 @@ static inline int k_work_reschedule(struct k_work_delayable *w, int64_t delay) {
 #define INPUT_REL_X 0
 #define INPUT_REL_Y 1
 #define INPUT_REL_WHEEL 8
+#define INPUT_REL_HWHEEL 6
 #define DT_NUM_INST_STATUS_OKAY(c) 1
 #define DT_INST_PROP(i, p) PROP_##p
 #define DEVICE_DT_INST_DEFINE(i, init, pm, data, cfg, level, priority, a) \
@@ -97,6 +98,12 @@ static uint8_t layer_order[10];
 static unsigned activations;
 static inline uint8_t zmk_keymap_layer_index_to_id(uint8_t i) { return layer_order[i]; }
 static inline bool zmk_keymap_layer_active(uint8_t i) { assert(i < 10); return i == 0 || active_layers[i]; }
+static inline uint8_t zmk_keymap_highest_layer_active(void) {
+    for (int i = 9; i >= 0; --i) {
+        if (zmk_keymap_layer_active(layer_order[i])) return i;
+    }
+    return 0;
+}
 static inline int change_layer(uint8_t id, bool on) {
     assert(id < 10); if (active_layers[id] == on) return 0;
     active_layers[id] = on;
@@ -201,8 +208,10 @@ int main(void) {
     puts("PASS: manual entry invalidates pending automatic entry and inhibits renewal");
 
     reset_test(); qualify(); drain(); change_layer(PROP_manual_layer,true);
-    advance(2200); drain(); assert(!active()); assert(active_layers[PROP_manual_layer]);
-    puts("PASS: automatic expiry never releases manual MOUSE_HOLD");
+    advance(9000); drain(); assert(active()); assert(active_layers[PROP_manual_layer]);
+    change_layer(PROP_manual_layer,false);
+    advance(9999); drain(); assert(active()); advance(10000); drain(); assert(!active());
+    puts("PASS: manual MOUSE_HOLD preserves active AUTO until release plus 1000ms");
 
     for (unsigned p = 0; p < 43; p++) {
         reset_test(); qualify(); drain(); position(p,true);
@@ -237,8 +246,9 @@ int main(void) {
     reset_test(); input(INPUT_REL_X,0); input(INPUT_REL_WHEEL,1);
     advance(2000); input(INPUT_REL_WHEEL,-1); drain(); assert(!active());
     qualify(); drain(); assert(active()); advance(2500); input(INPUT_REL_WHEEL,1);
-    advance(3200); drain(); assert(!active());
-    puts("PASS: zero samples and scroll never qualify or renew automatic XY ownership");
+    advance(3200); drain(); assert(active());
+    advance(3499); drain(); assert(active()); advance(3500); drain(); assert(!active());
+    puts("PASS: scroll renews an active session but never qualifies a new one");
 
     reset_test(); advance(1100); keycode(1100); keycode(900); qualify(); drain(); assert(!active());
     advance(1340); motion(); advance(1380); motion(); advance(1399); motion();
@@ -250,8 +260,123 @@ int main(void) {
     advance(2200); drain(); assert(!active_layers[4]);
     puts("PASS: activation, external events and expiry use the same stable layer ID");
 
+
+    /* The old implementation passes the previous suite but expires during this hold. */
+    const uint16_t controls[] = PROP_activity_positions;
+    for (unsigned i = 0; i < ARRAY_SIZE(controls); ++i) {
+        reset_test(); qualify(); drain(); advance(2199); position(controls[i],true);
+        advance(10000); drain(); assert(active());
+        position(controls[i],false); advance(10999); drain(); assert(active());
+        advance(11000); drain(); assert(!active());
+    }
+    puts("PASS: every pointing control protects a long hold, then expires 1000ms after release");
+
+    reset_test(); qualify(); drain();
+    for (int64_t t=2000; t<=10000; t+=500) {
+        advance(t); position(7,true); drain(); assert(active());
+        advance(t+10); position(7,false); drain(); assert(active());
+    }
+    advance(11009); drain(); assert(active()); advance(11010); drain(); assert(!active());
+    puts("PASS: repeated stationary clicks keep the session alive");
+
+    reset_test(); qualify(); drain(); advance(2190); position(7,true);
+    advance(2191); position(8,true); advance(5000); drain(); assert(active());
+    position(7,false); advance(9000); drain(); assert(active());
+    position(8,false); advance(9999); drain(); assert(active());
+    advance(10000); drain(); assert(!active());
+    puts("PASS: overlapping controls wait for the last release");
+
+    reset_test(); qualify(); drain(); advance(2199); position(18,true);
+    advance(2220); drain(); assert(active()); position(19,true);
+    position(18,false); advance(6000); drain(); assert(active()); position(19,false);
+    advance(6999); drain(); assert(active()); advance(7000); drain(); assert(!active());
+    puts("PASS: raw J/K protect recognition across the old timeout and both releases");
+
+    const uint8_t upper_layers[] = {5,6,7,9};
+    for (unsigned i=0; i<ARRAY_SIZE(upper_layers); ++i) {
+        for (unsigned j=0; j<ARRAY_SIZE(controls); ++j) {
+            reset_test(); qualify(); drain(); change_layer(upper_layers[i],true);
+            advance(2199); position(controls[j],true); keycode(now_ms);
+            advance(2200); drain(); assert(!active());
+            position(controls[j],false); drain(); assert(!active());
+        }
+    }
+    puts("PASS: NUM/NAV/FUNCTION/SYSTEM positions never acquire pointing holds");
+
+    reset_test(); qualify(); drain(); position(7,true); change_layer(5,true);
+    advance(5000); drain(); assert(active()); position(7,false);
+    advance(5999); drain(); assert(active()); advance(6000); drain(); assert(!active());
+    assert(active_layers[5]);
+    puts("PASS: an admitted hold releases correctly after another layer overrides it");
+
+    const unsigned exits[] = {10,37,39,40,41};
+    for (unsigned i=0; i<ARRAY_SIZE(exits); ++i) {
+        reset_test(); qualify(); drain(); position(7,true); position(exits[i],true);
+        assert(!active()); advance(5000); position(7,false); drain(); assert(!active());
+    }
+    reset_test(); qualify(); drain(); position(7,true); change_layer(AUTO_LAYER,false);
+    advance(5000); position(7,false); drain(); assert(!active());
+    puts("PASS: typing/IME/thumb/explicit exits override a hold; late releases cannot resurrect it");
+
+    reset_test(); qualify(); drain(); position(7,true); advance(1201); press_a();
+    advance(1600); qualify(); drain(); assert(active());
+    advance(5000); drain(); assert(active()); position(7,false);
+    advance(5999); drain(); assert(active()); advance(6000); drain(); assert(!active());
+    puts("PASS: fresh XY may start a new session that respects a still-held physical button");
+
+    const int wheels[] = {INPUT_REL_WHEEL,INPUT_REL_HWHEEL};
+    for (unsigned i=0; i<ARRAY_SIZE(wheels); ++i) {
+        reset_test(); input(wheels[i],1); advance(1500); input(wheels[i],-1);
+        drain(); assert(!active()); qualify(); drain(); assert(active());
+        advance(2699); input(wheels[i],-1); advance(3698); drain(); assert(active());
+        advance(3699); drain(); assert(!active());
+    }
+    puts("PASS: both wheel axes renew without becoming automatic-entry triggers");
+
+    reset_test(); qualify(); drain(); advance(2199);
+    input(INPUT_REL_X,0); input(INPUT_REL_WHEEL,0); input(INPUT_REL_HWHEEL,0);
+    advance(2200); drain(); assert(!active());
+    puts("PASS: zero input samples never renew the deadline");
+
+    reset_test(); qualify(); drain(); advance(2200); assert(mouse_work.work.queued);
+    position(7,true); drain(); assert(active()); advance(5000); position(7,false);
+    advance(5999); drain(); assert(active()); advance(6000); drain(); assert(!active());
+    puts("PASS: an already queued timeout respects a new control hold");
+
+    reset_test(); qualify(); drain(); advance(2199); position(6,true);
+    change_layer(PROP_manual_layer,true); advance(9000); motion(); drain(); assert(active());
+    advance(9001); position(6,false); change_layer(PROP_manual_layer,false);
+    advance(10000); drain(); assert(active()); advance(10001); drain(); assert(!active());
+    puts("PASS: active auto/manual overlap is renewed and has release grace without changing manual ownership");
+
+    reset_test(); qualify(); drain(); advance(2199); position(22,true); position(34,true);
+    keycode(now_ms); advance(2200); drain(); assert(!active());
+    puts("PASS: bare modifiers do not count as ongoing pointer operation");
+
+    reset_test(); layer_order[AUTO_LAYER]=4; layer_order[4]=AUTO_LAYER;
+    qualify(); drain(); advance(2199); position(7,true); advance(5000); drain(); assert(active());
+    position(7,false); advance(6000); drain(); assert(!active());
+    puts("PASS: pointing layer classification uses indices while ownership uses stable IDs");
+
+    reset_test(); change_layer(4,true); qualify(); drain(); assert(active());
+    advance(5000); drain(); assert(active()); change_layer(4,false);
+    advance(5999); drain(); assert(active()); advance(6000); drain(); assert(!active());
+    puts("PASS: SLOW entered before AUTO keeps the session alive and rearms on release");
+
+    reset_test(); change_layer(4,true); position(7,true); qualify(); drain(); assert(active());
+    change_layer(4,false); advance(5000); drain(); assert(active()); position(7,false);
+    advance(5999); drain(); assert(active()); advance(6000); drain(); assert(!active());
+    puts("PASS: a click begun in SLOW before AUTO stays held after SLOW is released");
+
+    reset_test(); change_layer(8,true); input(INPUT_REL_WHEEL,1);
+    advance(5000); change_layer(8,false); drain(); assert(!active());
+    reset_test(); change_layer(4,true); qualify(); drain(); position(7,true);
+    press_a(); assert(!active()); change_layer(4,false); position(7,false);
+    advance(10000); drain(); assert(!active());
+    puts("PASS: manual-only release and explicit cancellation cannot create AUTO");
+
     assert(pthread_mutex_destroy(&mouse_lock.mutex) == 0);
-    puts("RESULT: 19 lifecycle checks passed");
+    puts("RESULT: 36 lifecycle checks passed");
     return 0;
 }
 '''
@@ -272,9 +397,10 @@ def main() -> int:
     props = {}
     for name in ("manual-layer", "dwell-ms", "max-gap-ms", "require-prior-idle-ms"):
         props[name.replace("-", "_")] = int(re.search(rf"{name}\s*=\s*<(\d+)>", node)[1])
-    excluded = re.search(r"excluded-positions\s*=\s*<(.*?)>", node)[1].split()
     config = "\n".join(f"#define PROP_{key} {value}" for key, value in props.items())
-    config += "\n#define PROP_excluded_positions {" + ",".join(excluded) + "}\n"
+    for name in ("excluded-positions", "activity-positions", "activity-layers"):
+        values = re.search(rf"{name}\s*=\s*<(.*?)>", node)[1].split()
+        config += "\n#define PROP_" + name.replace("-", "_") + " {" + ",".join(values) + "}\n"
     layer, timeout = re.search(r"&mouse_dwell\s+(\d+)\s+(\d+)", expanded).groups()
     config += f"#define AUTO_LAYER {layer}\n#define TIMEOUT_MS {timeout}\n"
     with tempfile.TemporaryDirectory(prefix="roba-mouse-lifecycle-") as directory:
