@@ -41,8 +41,8 @@ layers:
   - IME ON
   - {t: SPACE, h: NUM}
   - {t: HENKAN, h: NAV}
-  - BACKSPACE
   - {t: ENTER, h: FUNCTION}
+  - BACKSPACE
   - {t: ESCAPE, h: SYSTEM}
   IME_ALT:
   - {t: ▽, type: trans}
@@ -349,8 +349,8 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - DEL
   - {type: held}
+  - DEL
   - {t: ▽, type: trans}
   SCROLL:
   - {t: ▽, type: trans}
