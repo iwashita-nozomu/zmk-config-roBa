@@ -21,9 +21,9 @@ PR公開やビルド成功は実機への適用とは別です。書き込み後
 | Z (22) | z | 約200msでShift。単独保持の解放後は200msの1打猶予 |
 | Space (38) | Space | NUM |
 | 左親指、Space右・旧Tab (39) | 変換（INT_HENKAN） | NAV、離すと解除 |
-| 右親指・旧Backspace (40) | Enter | FUNCTION |
+| 右親指・旧Backspace (40) | Enter | SYSTEM |
 | 右親指・旧Enter (41) | Backspace | FUNCTION中だけDelete |
-| 右下Esc (42) | Esc | SYSTEM |
+| 右下Esc (42) | Esc | FUNCTION |
 | U (6) | 通常層ではU | MOUSE_HOLD。マウス中は押下から保持 |
 | N (29) | N | 通常のNリピート。スクロール兼用なし |
 | M (30) | 通常層ではM | SCROLL。マウス中は押下から有効 |
@@ -43,7 +43,7 @@ U/M/引用符、Space/変換/Esc/Enterは標準layer-tapの200ms・tap-preferred
 Ctrl・GUI (Win/Command)・Altの専用キーは維持しています。
 H/I/Nは通常層で普通の文字キーです。Zは下記のShift兼用です。削除コンボは追加していません。
 右親指のBackspaceはタップ／ホールド兼用にせず、押しっぱなしの連続削除を使えます。
-DeleteはEnter(40)のFUNCTIONを保持してBackspace(41)を押します。EnterのFn兼用も一緒に移動し、Backspaceには長押しの別機能を付けません。
+DeleteはEsc(42)のFUNCTIONを保持してBackspace(41)を押します。BASEのFUNCTION/SYSTEMの長押し先だけを交換し、Enter/Escのタップ位置とBackspace専用キーは維持します。
 
 ### ShiftとZ
 
@@ -322,7 +322,8 @@ Y/U/I/O/Pは `&none` で、文字も下位MOUSE/NUMの操作も送りません�
 Home/End、Ctrl+Tab、Ctrl+Shift+Tab、GUI+Shift+左右矢印、エンコーダーのCtrl+PageUp/PageDownは維持。
 NAVを離すと残ったレイヤーの割り当てへ戻ります。
 
-FUNCTIONはEnterホールド中だけです。
+FUNCTIONは右下Esc(42)のホールド中だけです。Enter(40)のホールドはSYSTEMです。
+どちらも標準layer-tapの200ms・tap-preferred判定を維持し、保持に確定した後は解放時にタップのEnter/Escを送りません。
 
 ```text
 通常の位置:  Y    U    I    O    P
@@ -335,7 +336,7 @@ FUNCTION:   F6   F7   F8   F9  F10
 FUNCTION:  F11  F12  F13   透過  透過
 
 右親指Backspace (41): Delete
-右下 (42): Esc / 保持でSYSTEM
+右下 (42): Esc / 保持でFUNCTION
 ```
 
 Fnを離すと右親指(41)はBackspaceへ戻ります。NUMを同時に保持していた場合、N/M/COMMAはNUMの括弧へ戻ります。
@@ -343,9 +344,9 @@ SCROLLを別途保持している間は、U保持・I/OクリックとM・P直�
 
 ## SYSTEM：右手に集約
 
-**右下Esc (42) はタップEsc、ホールド中だけSYSTEMです。**
-右親指(40)はEnter/FUNCTION、(41)はBackspace専用です。FUNCTION中の(41)でDeleteを出します。
-Escと一緒にSYSTEM入口を右下へ移したため、Backspaceの長押しは設定操作になりません。
+**右親指Enter (40) はタップEnter、ホールド中だけSYSTEMです。**
+右下(42)はEsc/FUNCTION、右親指(41)はBackspace専用です。FUNCTION中の(41)でDeleteを出します。
+SYSTEM入口はEnter(40)、FUNCTION入口はEsc(42)で、ともに右手です。Backspaceの長押しは設定操作になりません。
 左親指IMEは専用キーで、ShiftやSYSTEMには入りません。設定への入口を含め右手側に集約しています。
 
 | SYSTEM中の右手位置 | 動作 |
@@ -358,8 +359,8 @@ Escと一緒にSYSTEM入口を右下へ移したため、Backspaceの長押し�
 
 数字1/2/3は普通のキー送信で、CPI設定などの新機能ではありません。
 SYSTEMの左手位置には専用の設定割り当てを置かず透過にします。
-Escのタップ／ホールド判定が加わるので、通常の即時Escとは操作感が変わります。
-SYSTEMからの戻りはEscキーを離すだけで、IME送信順や他の保持レイヤーをリセットしません。
+EnterのSYSTEMとEscのFUNCTIONは保持判定後だけ有効です。短いタップはそれぞれEnter/Escを送り、時間設定は変更していません。
+SYSTEMからの戻りはEnterキー、FUNCTIONからの戻りはEscキーを離すだけで、IME送信順や他の保持レイヤーをリセットしません。
 **bootloaderとペアリング消去は通常入力ではありません。検証のために実行しないでください。**
 
 ## NUM：数字とShift記号
@@ -478,7 +479,7 @@ IME_ALTの残り42位置とsensorは透過です。IME処理には独自Cコー�
 **覚えるのはroBaの送信順であり、PCの現在のIME状態ではありません。**
 他の入力機器や画面操作、アプリごとの状態、接続先変更、再起動後には、既に有効なモードを
 再指定する場合があります。全接続先共通の状態で、再起動で初期化します。起動時にLANGは送信しません。
-実機では同じキーを4回タップして往復を確認し、ZのShiftホールド、EscのSYSTEMホールド、変換/NAV、A＋SではLANGが出ないことを確認します。
+実機では同じキーを4回タップして往復を確認し、ZのShiftホールド、EnterのSYSTEMホールド、EscのFUNCTIONホールド、変換/NAV、A＋SではLANGが出ないことを確認します。
 
 ```text
 BASE0 < IME_ALT1 < MOUSE2 < MOUSE_HOLD3 < SLOW4 < NUM5 < NAV6 < FUNCTION7 < SCROLL8 < SYSTEM9
@@ -490,7 +491,7 @@ C+V=等号はBASE/IME_ALT/MOUSE/MOUSE_HOLD/SLOWに限定します。L+引用符=
 J+K=中クリックはMOUSE/MOUSE_HOLD/SLOW/SCROLL限定で、上位NUM/NAV/FUNCTION/SYSTEMの入力を奪いません。
 
 今回の配置修正ではレイヤー番号を変えていません。
-ZMK Studioの保存済みkeymapがある場合は内容を控え、Z22・親指37・HENKAN39・交換した右親指40/41を含む新しいstockと照合してください。
+ZMK Studioの保存済みkeymapがある場合は内容を控え、Z22・親指37・HENKAN39・右親指40/41・長押し先を交換した40/42を含む新しいstockと照合してください。
 撤去したime_shiftやshared_moを使う保存設定をそのまま残さないでください。settings_resetやペアリング消去を自動実行しません。
 
 根拠: [MicrosoftのLANG対応](https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/keyboard-japan-ime)、

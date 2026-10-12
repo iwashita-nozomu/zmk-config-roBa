@@ -59,8 +59,8 @@ class KeymapTests(unittest.TestCase):
             6: "&lt 3 U", 21: "&lt 4 LS(NUMBER_7)", 7: "&kp I", 16: "&kp MINUS", 17: "&kp H",
             29: "&kp N", 30: "&lt 8 M",
             37: "&ime_toggle LANG1", 38: "&lt 5 SPACE",
-            39: "&lt 6 INT_HENKAN", 40: "&lt 7 ENTER",
-            41: "&kp BACKSPACE", 42: "&lt 9 ESCAPE",
+            39: "&lt 6 INT_HENKAN", 40: "&lt 9 ENTER",
+            41: "&kp BACKSPACE", 42: "&lt 7 ESCAPE",
         }
         for position, binding in expected.items():
             with self.subTest(position=position):
@@ -271,12 +271,13 @@ class KeymapTests(unittest.TestCase):
         for flags in itertools.product((False, True), repeat=len(LAYER_NAMES) - 1):
             active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
             with self.subTest(active=sorted(active)):
-                self.assertEqual(resolve(active, 42), "&lt 9 ESCAPE")
-                self.assertEqual(resolve(active, 40), "&lt 7 ENTER")
+                self.assertEqual(resolve(active, 42), "&lt 7 ESCAPE")
+                self.assertEqual(resolve(active, 40), "&lt 9 ENTER")
                 expected_delete = "&kp DEL" if "FUNCTION" in active else "&kp BACKSPACE"
                 self.assertEqual(resolve(active, 41), expected_delete)
                 self.assertEqual(resolve(active - {"FUNCTION"}, 41), "&kp BACKSPACE")
-                self.assertEqual(resolve(active - {"SYSTEM"}, 42), "&lt 9 ESCAPE")
+                self.assertEqual(resolve(active - {"SYSTEM"}, 40), "&lt 9 ENTER")
+                self.assertEqual(resolve(active - {"FUNCTION"}, 42), "&lt 7 ESCAPE")
                 if "SYSTEM" in active:
                     expected_top = [f"&bt BT_SEL {i}" for i in range(5)]
                 elif "SCROLL" in active:
@@ -302,6 +303,28 @@ class KeymapTests(unittest.TestCase):
             expected = MOUSE_KEYS if mouse else LETTERS
             self.assertEqual([resolve(underlying, p) for p in range(5, 10)], expected)
 
+    def test_function_system_entry_and_release_orders_in_lookup_model(self):
+        # Layer-tap bindings keep their tap key and own only their held layer.
+        expected = {40: ("SYSTEM", "ENTER"), 42: ("FUNCTION", "ESCAPE")}
+        for press_order in itertools.permutations(expected):
+            for release_order in itertools.permutations(expected):
+                active = {"BASE", "NUM"}
+                held = {}
+                for position in press_order:
+                    behavior, layer, tap = resolve(active, position).split()
+                    target = LAYER_NAMES[int(layer)]
+                    self.assertEqual(behavior, "&lt")
+                    self.assertEqual((target, tap), expected[position])
+                    held[position] = target
+                    active.add(target)
+                for position in release_order:
+                    active.remove(held.pop(position))
+                    self.assertIn("NUM", active)
+                    self.assertTrue(set(held.values()) <= active)
+                    delete = "&kp DEL" if "FUNCTION" in active else "&kp BACKSPACE"
+                    self.assertEqual(resolve(active, 41), delete)
+                self.assertEqual(active, {"BASE", "NUM"})
+
     def test_mouse_exit_is_off_only_and_preserves_key_output(self):
         self.assertRegex(EXPANDED, (
             r'(?s)mouse_off:\s*\w+\s*\{[^}]*'
@@ -322,7 +345,7 @@ class KeymapTests(unittest.TestCase):
             resolve({"BASE", "MOUSE"}, 37), "&ime_toggle LANG1"
         )
         self.assertEqual(resolve({"BASE", "MOUSE"}, 39), "&lt 6 INT_HENKAN")
-        self.assertEqual(resolve({"BASE", "MOUSE"}, 42), "&lt 9 ESCAPE")
+        self.assertEqual(resolve({"BASE", "MOUSE"}, 42), "&lt 7 ESCAPE")
 
     def test_mouse_exit_keeps_manual_layers_in_lookup_model(self):
         # Read the target from the macro; behavior semantics are checked above.
@@ -497,10 +520,10 @@ class KeymapTests(unittest.TestCase):
             self.assertEqual(highest in scroll_layers, "SCROLL" in active and "SYSTEM" not in active)
 
     def test_system_entry_and_dedicated_settings_are_right_handed(self):
-        self.assertEqual(LAYERS["BASE"][42], "&lt 9 ESCAPE")
+        self.assertEqual(LAYERS["BASE"][40], "&lt 9 ENTER")
         entries = [(name, p) for name, keys in LAYERS.items() for p, key in enumerate(keys)
                    if re.match(r"&(?:mo|lt) 9(?: |$)", key)]
-        self.assertEqual(entries, [("BASE", 42)])
+        self.assertEqual(entries, [("BASE", 40)])
         # Physical positions verified against boards/shields/roBa/roBa.dtsi.
         right = set(range(5, 10)) | set(range(16, 22)) | set(range(28, 34)) | {40, 41, 42}
         for position, binding in enumerate(LAYERS["SYSTEM"]):
