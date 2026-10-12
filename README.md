@@ -21,9 +21,9 @@ PR公開やビルド成功は実機への適用とは別です。書き込み後
 | Z (22) | z | 約250msでShift。単独保持の解放後は200msの1打猶予 |
 | Space (38) | Space | NUM |
 | 左親指の一番右 (39) | Esc | NAV、離すと解除 |
-| 右親指 (40) | Backspace | SYSTEM（保持位置は変更なし） |
+| 右親指 (40) | 無入力 | 200ms保持でSYSTEM（位置・判定時間は維持） |
 | 右親指 (41) | Enter | 兼用なし |
-| 右下・旧Esc (42) | Fn専用、キー入力なし | 押下からFUNCTION、解放で解除 |
+| 右下 (42) | Backspace | 200ms保持でFUNCTION、解放で解除 |
 | U (6) | 通常層ではU | MOUSE_HOLD。マウス中は押下から保持 |
 | J＋K (18/19) | BASE/IME_ALTで同時押しするとMOUSE_HOLD | 両方を離すまで。マウス中の同時押しは中クリック |
 | N (29) | N | 通常のNリピート。スクロール兼用なし |
@@ -33,9 +33,9 @@ PR公開やビルド成功は実機への適用とは別です。書き込み後
 
 **Nのスクロール役割をM位置へ移しました。文字のN/Mは交換していません。**
 通常速度の手動入口はU保持とBASE/IME_ALTのJ＋Kです。Mはスクロール担当です。
-通常Uは標準hold-tap、M/引用符・Space/Esc(39)/Backspace(40)は標準layer-tapで、200ms・tap-preferred判定を使います。
+通常Uは標準hold-tap、M/引用符・Space/Esc(39)/Backspace(42)は標準layer-tapで、200ms・tap-preferred判定を使います。
 タップは文字等、ホールドは各レイヤーです。マウス中Uは共有保持behavior、M/引用符は標準 `&mo` で即時保持します。
-Fn(42)は `&mo L_FN` で、200msの判定もタップEscもありません。
+右下(42)は `&lt L_FN BACKSPACE` です。Fn専用の即時ONから、短押しBackspace／200ms保持Fnへ変更しました。
 左親指IMEは押下でIMEを切り替える専用キーです。ShiftやSYSTEMには入りません。
 
 保持解除はそのレイヤーだけを外し、ほかの保持状態やIME送信順をリセットしません。
@@ -44,10 +44,11 @@ Fn(42)は `&mo L_FN` で、200msの判定もタップEscもありません。
 
 Ctrl・GUI (Win/Command)・Altの専用キーは維持しています。
 H/I/Nは通常層で普通の文字キーです。Zは下記のShift兼用です。削除コンボは追加していません。
-**BASEのEnterとBackspaceはタップだけ交換し、SYSTEMの保持は40のままです。**
-Backspace(40)の短いタップは削除、長押しはSYSTEMです。押しっぱなしのBackspaceリピートはできません。
-DeleteはFn(42)を先に押したままBackspace(40)を押します。FUNCTIONは押下から有効です。
-Enter(41)は単独キー、Esc/NAV(39)とFn(42)は不変です。Holdの位置・判定時間を移動していません。
+**Backspaceのタップを右下42へ移し、SYSTEM40・FUNCTION42の保持位置とEnter41は維持しています。**
+右下42の短いタップは削除、200ms保持はFUNCTIONです。押しっぱなしのBackspaceリピートはできません。
+元の40は短押し無入力／200ms保持SYSTEMです。標準hold-tapのtap側を`&none`にし、管理層の入口を即時化しません。
+Deleteは42を約200ms保持してFUNCTIONへ入り、40を押します。Deleteは元の位置を維持し、同じ42でFnとBackspaceを同時押しする操作にはしません。
+Esc/NAV39、Enter41、ZのShift250ms／猶予200msは変更していません。
 
 ### ShiftとZ
 
@@ -100,22 +101,22 @@ Z位置のShiftとHJKLを使い、Shift+Tabには既存のD+Fコンボも使え�
 専用変換 `INT_HENKAN` はこの位置から撤去し、指示のない別位置には追加していません。
 親指38のSpace/NUMと、親指37のLANG切替専用キーは維持しています。
 
-右下42はFn専用です。押下ですぐFUNCTIONを有効にし、解放でその層だけを解除します。
+右下42は短押しBackspace／保持Fnです。200msの保持判定後にFUNCTIONを有効にし、解放でその層だけを解除します。
 Tabは既存のS+D、Shift+TabはD+Fです。J+Kは通常時のマウス入口とマウス中の中クリックに分けます。
 
 ## 時間条件と操作の有効範囲
 
-自動MOUSEの無操作待ちだけを1000msから500msへ短縮しました。Z保持250ms、解放後のShift猶予200ms、ほかのHold判定は維持しています。設定時間はOSまでの応答時間の保証ではありません。
+自動MOUSEの無操作待ちは500msです。右下42はBackspaceタップ兼用のため200ms保持でFnに入り、SYSTEM40は従来の200ms保持を維持します。Z保持250ms、解放後のShift猶予200msは変更していません。設定時間はOSまでの応答時間の保証ではありません。
 採用ZMK `acfd8e5` の標準定義・処理と、このリポジトリの本番Cを照合しています。
 
 | 対象 | 時間条件 | 何が有効になるか・終わるか |
 | --- | --- | --- |
-| 通常U/M/引用符、Space/Esc(39)/Backspace(40) | hold-tap、200ms、tap-preferred | 短い解放で文字等、保持判定で各レイヤー。別キーの押下だけでは早期holdしない |
+| 通常U/M/引用符、Space/Esc(39)/Backspace(42) | hold-tap、200ms、tap-preferred | 短い解放で文字等、保持判定で各レイヤー。別キーの押下だけでは早期holdしない |
 | 通常ZのShift | 250ms、tap-preferred、quick-tap=0 | 保持でShift。単独保持の解放処理から200msだけ次の1打を待ち、1打で解除 |
 | 親指37のIME | 長押し判定なし | 押下時にLANG切替。保持でShiftへ変化しない |
 | NUMの0/Shift | 200ms、balanced、quick-tap=0 | 200ms保持、または他キーを押して離すまで0を保持するとShift。単なる他キー押下だけでは未決定 |
 | マウス中U/M/引用符 | 長押し判定なし | Uは共有保持、M/引用符はmo。自動MOUSEの期限から独立 |
-| 右下Fn(42) | 長押し判定なし | 押下からFUNCTION、解放でFUNCTIONのみ解除。タップ出力なし |
+| SYSTEM(40) | hold-tap、200ms、tap-preferred | 短押し無入力、保持でSYSTEM、解放でSYSTEMのみ解除 |
 | 全7コンボ | 1キー目から2キー目まで50ms未満 | BASE/IME_ALTのJ+K入口のみslow-releaseで両方の解放を待つ。マウス中J+Kの中ボタンと既存5コンボは片方の解放で終了 |
 | 自動MOUSEへの入口 | 非ゼロXYの継続200ms以上かつ累積32カウント以上、報告間隔80ms以下、最後のキーコード押下から300ms以上 | 新しいXY報告が条件を満たすと有効化を要求。200msと300msは加算する待ち時間ではない |
 | 自動MOUSEの保持 | 最後の非ゼロXY・縦横スクロール・マウス用キー操作／解放から500ms | マウス用キーまたは手動ポインティング層の保持中はタイムアウトしない。通常文字・明示解除を優先 |
@@ -123,7 +124,7 @@ Tabは既存のS+D、Shift+TabはD+Fです。J+Kは通常時のマウス入口�
 
 **使い方と境界上の注意**
 
-- **左親指Esc(39)を長く押すとNAVです。** U/M/引用符/Space/Backspace(40)/Esc(39)は、
+- **左親指Esc(39)を長く押すとNAVです。** U/M/引用符/Space/Backspace(42)/Esc(39)は、
   そのキーを長押しして文字をリピートする配置ではありません。通常N/Enterはこの200ms判定を持ちません。Zは上記のShift兼用です。
 - **Shift+ZはZの単独長押し→解放→200ms以内の押し直し**です。親指37はIME専用です。
   一方、Uを短く押してIを重ね、200ms未満でUを離す操作は、マウスが別途有効でなければ通常のU/I入力です。
@@ -329,8 +330,8 @@ Y/U/I/O/Pは `&none` で、文字も下位MOUSE/NUMの操作も送りません�
 Home/End、Ctrl+Tab、Ctrl+Shift+Tab、GUI+Shift+左右矢印、エンコーダーのCtrl+PageUp/PageDownは維持。
 NAVを離すと残ったレイヤーの割り当てへ戻ります。
 
-FUNCTIONは右下Fn(42)を押した瞬間から解放まで有効です。タップ出力や長押し判定はありません。
-Backspace(40)の保持はSYSTEMで、こちらは標準layer-tapの200ms・tap-preferred判定を維持します。
+FUNCTIONは右下Backspace/Fn(42)を約200ms保持してから解放まで有効です。短いタップはBackspaceを送ります。
+元のBackspace位置(40)は短押し無入力／保持SYSTEMです。標準hold-tapの200ms・tap-preferred判定を維持します。
 
 ```text
 通常の位置:  Y    U    I    O    P
@@ -342,18 +343,18 @@ FUNCTION:   F6   F7   F8   F9  F10
 通常の位置:  N    M    ,    .    /
 FUNCTION:  F11  F12  F13   透過  透過
 
-右親指Backspace (40): Delete
-右下 (42): Fn専用、押下からFUNCTION
+右親指SYSTEM位置 (40): Delete
+右下 (42): 短押しBackspace / 200ms保持でFUNCTION
 ```
 
-Fnを離した後の新しい40の押下はBackspace/SYSTEMに戻ります。NUMを同時に保持していた場合、N/M/COMMAはNUMの括弧へ戻ります。
+Fnを離した後の新しい40の押下は短押し無入力／保持SYSTEMに戻ります。NUMを同時に保持していた場合、N/M/COMMAはNUMの括弧へ戻ります。
 SCROLLを別途保持している間は、U保持・I/OクリックとM・P直下キーのポインティング操作をFUNCTIONより優先します。
 
 ## SYSTEM：右手に集約
 
-**右親指40はタップBackspace、ホールド中だけSYSTEMです。SYSTEMの保持位置は変更していません。**
-右下(42)はFn専用、右親指(41)はEnter専用です。FUNCTION中の(40)でDeleteを出します。
-SYSTEM入口はBackspace(40)、FUNCTION入口はFn(42)で、ともに右手です。
+**右親指40は短押し無入力、200ms保持でSYSTEMです。SYSTEMの保持位置・判定時間は変更していません。**
+右下(42)はBackspace/Fn、右親指(41)はEnter専用です。FUNCTION中の(40)でDeleteを出します。
+SYSTEM入口は40、FUNCTION入口は42で、ともに右手です。
 Fnを先に保持した場合の40はDeleteで、SYSTEMには入りません。両層を保持するときは40のSYSTEMを先に成立させます。
 左親指IMEは専用キーで、ShiftやSYSTEMには入りません。設定への入口を含め右手側に集約しています。
 
@@ -367,8 +368,8 @@ Fnを先に保持した場合の40はDeleteで、SYSTEMには入りません。�
 
 数字1/2/3は普通のキー送信で、CPI設定などの新機能ではありません。
 SYSTEMの左手位置には専用の設定割り当てを置かず透過にします。
-Backspace/SYSTEMは200msの保持判定、Fn/FUNCTIONは即時のmomentary操作です。
-SYSTEMからの戻りはBackspaceキー、FUNCTIONからの戻りはFnキーを離すだけで、IME送信順や他の保持レイヤーをリセットしません。
+SYSTEM40とBackspace/Fn42は200msの保持判定です。SYSTEM40のタップは`&none`で、文字入力も下位層への透過もありません。
+SYSTEMからの戻りは40、FUNCTIONからの戻りは42を離すだけで、IME送信順や他の保持レイヤーをリセットしません。
 **bootloaderとペアリング消去は通常入力ではありません。検証のために実行しないでください。**
 
 ## NUM：数字とShift記号
@@ -487,7 +488,7 @@ IME_ALTの残り42位置とsensorは透過です。IME処理には独自Cコー�
 **覚えるのはroBaの送信順であり、PCの現在のIME状態ではありません。**
 他の入力機器や画面操作、アプリごとの状態、接続先変更、再起動後には、既に有効なモードを
 再指定する場合があります。全接続先共通の状態で、再起動で初期化します。起動時にLANGは送信しません。
-実機では同じキーを4回タップして往復を確認し、ZのShiftホールド、BackspaceのSYSTEMホールド、Fn専用キー、Esc/NAV、A＋SではLANGが出ないことを確認します。
+実機では同じキーを4回タップして往復を確認し、ZのShiftホールド、40のSYSTEMホールド、42のFnホールド、Esc/NAV、A＋SではLANGが出ないことを確認します。
 
 ```text
 BASE0 < IME_ALT1 < MOUSE2 < MOUSE_HOLD3 < SLOW4 < NUM5 < NAV6 < FUNCTION7 < SCROLL8 < SYSTEM9
@@ -499,7 +500,7 @@ C+V=等号はBASE/IME_ALT/MOUSE/MOUSE_HOLD/SLOWに限定します。L+引用符=
 J+K=入口はBASE/IME_ALT限定、中クリックはMOUSE/MOUSE_HOLD/SLOW/SCROLL限定で、上位NUM/NAV/FUNCTION/SYSTEMの入力を奪いません。
 
 今回の配置修正ではレイヤー番号を変えていません。
-ZMK Studioの保存済みkeymapがある場合は内容を控え、U6・Z22・親指37/39・右親指40/41・Fn専用42を含む新しいstockと照合してください。
+ZMK Studioの保存済みkeymapがある場合は内容を控え、U6・Z22・親指37/39・右親指40/41・Backspace/Fn42を含む新しいstockと照合してください。
 Uの旧 `lt/mo L_MOUSE_HOLD` を新しい `u_mouse/mouse_hold` と混在させないでください。
 撤去したime_shiftやshared_moを使う保存設定をそのまま残さないでください。settings_resetやペアリング消去を自動実行しません。
 
@@ -534,7 +535,7 @@ python3 -m unittest discover -s tests -v
 python3 -m compileall -q tests
 ```
 
-10層×43位置、全512層集合、Z長押しと1打猶予、親指IME専用化、Esc/NAV・Fn専用化、LANG送信順、NAV上段の無入力、MとP直下キーの組合せと解放順、MOUSEタイムアウト時の
+10層×43位置、全512層集合、Z長押しと1打猶予、親指IME専用化、Esc/NAV・右下Backspace/Fn・SYSTEM保持、LANG送信順、NAV上段の無入力、MとP直下キーの組合せと解放順、MOUSEタイムアウト時の
 参照先、Iクリック・J+K中クリックの層制限、XY/scroll scaler設定、設定操作の右手集約、JISの記号・Shift・Fキーを検査します。
 **キーマップ検査はマクロを展開する静的モデルです。時間判定のCテストも、ZMKヘッダ・実HID・タイマー・ホストの出力・
 物理的な操作感を検証するものではありません。** 実機の速度・スクロール量・連打・解放順は未検証です。

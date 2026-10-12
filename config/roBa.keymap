@@ -140,6 +140,16 @@
     };
 
     behaviors {
+        // Backspace moved to 42; keep SYSTEM at 40 with the same hold delay.
+        system_hold: system_hold {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <200>;
+            quick-tap-ms = <0>;
+            bindings = <&mo>, <&none>;
+        };
+
         // Releasing J+K must not cancel a U hold acquired during the handoff.
         mouse_hold: mouse_hold {
             compatible = "zmk,behavior-mouse-hold";
@@ -227,12 +237,12 @@
 
         BASE {
             // Left thumb: IME only, Space/NUM, Esc/NAV. Z holds Shift.
-            // Right thumb: Backspace/SYSTEM and Enter; bottom-right: momentary FUNCTION only.
+            // Right thumb: hold-only SYSTEM and Enter; bottom-right: Backspace/FUNCTION.
             bindings = <
 &kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &u_mouse 0 U  &kp I      &kp O    &kp P
 &kp A             &kp S         &kp D         &kp F                   &kp G        &kp LS(LG(S))    &kp MINUS  &kp H        &kp J  &kp K      &kp L    &lt L_SLOW JP_SQT
 &z_shift         &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &kp N        &lt L_SCROLL M  &kp COMMA  &kp DOT  &kp SLASH
-&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_toggle LANG1  &lt L_NUM SPACE  &lt L_NAV ESCAPE  &lt L_SYSTEM BACKSPACE  &kp ENTER                     &mo L_FN
+&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_toggle LANG1  &lt L_NUM SPACE  &lt L_NAV ESCAPE  &system_hold L_SYSTEM 0  &kp ENTER                     &lt L_FN BACKSPACE
             >;
 
             sensor-bindings = <&inc_dec_kp PG_UP PAGE_DOWN>;
