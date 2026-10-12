@@ -42,7 +42,7 @@
 
 // All pointing layers share controls; manual holds outlive automatic MOUSE.
 // U holds MOUSE_HOLD, I/O click, J+K middle-click, M scrolls, and 21 slows.
-#define AUTOMOUSE_PROCESSOR &mouse_dwell L_MOUSE 1000
+#define AUTOMOUSE_PROCESSOR &mouse_dwell L_MOUSE 500
 #define POINTING_BINDINGS \
     &trans  &trans  &trans  &trans  &trans  &kp LC(C)  &mouse_hold  &mkp MB1  &mkp MB2  &kp LC(V) \
     &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &none  &none  &trans  &mo L_SLOW \
@@ -227,12 +227,12 @@
 
         BASE {
             // Left thumb: IME only, Space/NUM, Esc/NAV. Z holds Shift.
-            // Right thumb: Enter/SYSTEM and Backspace; bottom-right: momentary FUNCTION only.
+            // Right thumb: Backspace/SYSTEM and Enter; bottom-right: momentary FUNCTION only.
             bindings = <
 &kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &u_mouse 0 U  &kp I      &kp O    &kp P
 &kp A             &kp S         &kp D         &kp F                   &kp G        &kp LS(LG(S))    &kp MINUS  &kp H        &kp J  &kp K      &kp L    &lt L_SLOW JP_SQT
 &z_shift         &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &kp N        &lt L_SCROLL M  &kp COMMA  &kp DOT  &kp SLASH
-&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_toggle LANG1  &lt L_NUM SPACE  &lt L_NAV ESCAPE  &lt L_SYSTEM ENTER  &kp BACKSPACE                     &mo L_FN
+&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_toggle LANG1  &lt L_NUM SPACE  &lt L_NAV ESCAPE  &lt L_SYSTEM BACKSPACE  &kp ENTER                     &mo L_FN
             >;
 
             sensor-bindings = <&inc_dec_kp PG_UP PAGE_DOWN>;
@@ -290,7 +290,7 @@
 &trans  &trans  &trans  &trans  &trans                                  &kp F1   &kp F2   &kp F3   &kp F4  &kp F5
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &kp F6   &kp F7   &kp F8   &kp F9  &kp F10
 &trans  &trans  &trans  &trans  &trans  &trans      &trans        &kp F11  &kp F12  &kp F13  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans      &trans        &kp DEL                              &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &kp DEL       &trans                               &trans
             >;
         };
 
