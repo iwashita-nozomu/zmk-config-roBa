@@ -41,9 +41,9 @@ layers:
   - IME ON
   - {t: SPACE, h: NUM}
   - {t: HENKAN, h: NAV}
-  - {t: ENTER, h: FUNCTION}
+  - {t: ENTER, h: SYSTEM}
   - BACKSPACE
-  - {t: ESCAPE, h: SYSTEM}
+  - {t: ESCAPE, h: FUNCTION}
   IME_ALT:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -349,9 +349,9 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {type: held}
-  - DEL
   - {t: ▽, type: trans}
+  - DEL
+  - {type: held}
   SCROLL:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -437,9 +437,9 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
   - {type: held}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
 combos:
 - p: [18, 19]
   k: '&mkp MB3'
