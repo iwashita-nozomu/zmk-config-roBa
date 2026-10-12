@@ -41,9 +41,9 @@ layers:
   - IME ON
   - {t: SPACE, h: NUM}
   - {t: ESC, h: NAV}
-  - {t: BACKSPACE, h: SYSTEM}
+  - {h: SYSTEM}
   - ENTER
-  - FUNCTION
+  - {t: BACKSPACE, h: FUNCTION}
   IME_ALT:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -437,7 +437,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {type: held}
+  - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
 combos:
