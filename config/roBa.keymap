@@ -140,8 +140,8 @@
     };
 
     behaviors {
-        // Backspace moved to 42; keep SYSTEM at 40 with the same hold delay.
-        system_hold: system_hold {
+        // Esc moved to 40; keep NAV at 39 with the same hold delay.
+        nav_hold: nav_hold {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "tap-preferred";
@@ -236,13 +236,13 @@
         compatible = "zmk,keymap";
 
         BASE {
-            // Left thumb: IME only, Space/NUM, Esc/NAV. Z holds Shift.
-            // Right thumb: hold-only SYSTEM and Enter; bottom-right: Backspace/FUNCTION.
+            // Left thumb: IME only, Space/NUM, hold-only NAV. Z holds Shift.
+            // Right thumb: Esc/SYSTEM and Enter/FUNCTION; bottom-right: dedicated Backspace.
             bindings = <
 &kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &u_mouse 0 U  &kp I      &kp O    &kp P
 &kp A             &kp S         &kp D         &kp F                   &kp G        &kp LS(LG(S))    &kp MINUS  &kp H        &kp J  &kp K      &kp L    &lt L_SLOW JP_SQT
 &z_shift         &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &kp N        &lt L_SCROLL M  &kp COMMA  &kp DOT  &kp SLASH
-&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_toggle LANG1  &lt L_NUM SPACE  &lt L_NAV ESCAPE  &system_hold L_SYSTEM 0  &kp ENTER                     &lt L_FN BACKSPACE
+&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_toggle LANG1  &lt L_NUM SPACE  &nav_hold L_NAV 0  &lt L_SYSTEM ESCAPE  &lt L_FN ENTER                     &kp BACKSPACE
             >;
 
             sensor-bindings = <&inc_dec_kp PG_UP PAGE_DOWN>;
@@ -300,7 +300,7 @@
 &trans  &trans  &trans  &trans  &trans                                  &kp F1   &kp F2   &kp F3   &kp F4  &kp F5
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &kp F6   &kp F7   &kp F8   &kp F9  &kp F10
 &trans  &trans  &trans  &trans  &trans  &trans      &trans        &kp F11  &kp F12  &kp F13  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans      &kp DEL       &trans                               &trans
+&trans  &trans  &trans  &trans  &trans  &trans      &trans        &trans                               &kp DEL
             >;
         };
 

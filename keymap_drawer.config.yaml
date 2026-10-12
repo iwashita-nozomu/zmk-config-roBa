@@ -2,11 +2,11 @@
 # raw_binding_map keys are preprocessed with config/roBa.keymap; no keycode copy.
 parse_config:
   raw_binding_map:
-    "&system_hold L_SYSTEM 0": {"t": "", "h": "SYSTEM"}
+    "&nav_hold L_NAV 0": {"t": "", "h": "NAV"}
     "&u_mouse 0 U": {"t": "U", "h": "MOUSE_HOLD"}
     "&mouse_hold": {"t": "MOUSE_HOLD", "type": "layer_activator"}
     "&z_shift": {"t": "Z", "h": "Shift 250 / +200ms"}
-    "&lt L_NAV ESCAPE": {"t": "ESC", "h": "NAV"}
+    "&lt L_SYSTEM ESCAPE": {"t": "ESC", "h": "SYSTEM"}
     "&lt L_SLOW JP_SQT": {"t": "'", "h": "SLOW"}
     "&ime_toggle LANG1": "IME ON"
     "&ime_toggle LANG2": "IME OFF"
