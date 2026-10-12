@@ -41,8 +41,8 @@ layers:
   - IME ON
   - {t: SPACE, h: NUM}
   - {t: ESC, h: NAV}
-  - {t: ENTER, h: SYSTEM}
-  - BACKSPACE
+  - {t: BACKSPACE, h: SYSTEM}
+  - ENTER
   - FUNCTION
   IME_ALT:
   - {t: ▽, type: trans}
@@ -349,8 +349,8 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
   - DEL
+  - {t: ▽, type: trans}
   - {type: held}
   SCROLL:
   - {t: ▽, type: trans}
