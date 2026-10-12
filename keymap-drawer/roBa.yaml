@@ -40,10 +40,10 @@ layers:
   - LEFT ALT
   - IME ON
   - {t: SPACE, h: NUM}
-  - {t: ESC, h: NAV}
-  - {h: SYSTEM}
-  - ENTER
-  - {t: BACKSPACE, h: FUNCTION}
+  - {h: NAV}
+  - {t: ESC, h: SYSTEM}
+  - {t: ENTER, h: FUNCTION}
+  - BACKSPACE
   IME_ALT:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -349,9 +349,9 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - DEL
   - {t: ▽, type: trans}
   - {type: held}
+  - DEL
   SCROLL:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
