@@ -44,7 +44,7 @@
 // U holds MOUSE_HOLD, I/O click, J+K middle-click, M scrolls, and 21 slows.
 #define AUTOMOUSE_PROCESSOR &mouse_dwell L_MOUSE 1000
 #define POINTING_BINDINGS \
-    &trans  &trans  &trans  &trans  &trans  &kp LC(C)  &mo L_MOUSE_HOLD  &mkp MB1  &mkp MB2  &kp LC(V) \
+    &trans  &trans  &trans  &trans  &trans  &kp LC(C)  &mouse_hold  &mkp MB1  &mkp MB2  &kp LC(V) \
     &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &none  &none  &trans  &mo L_SLOW \
     &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo L_SCROLL  &trans  &trans  &trans \
     &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
@@ -91,6 +91,15 @@
     combos {
         compatible = "zmk,combos";
 
+        // Same keys, disjoint domains: BASE entry versus pointing middle click.
+        mouse_entry {
+            timeout-ms = <50>;
+            key-positions = <18 19>;
+            layers = <L_BASE L_IME_ALT>;
+            bindings = <&mouse_hold>;
+            slow-release;
+        };
+
         middle_click {
             timeout-ms = <50>;
             key-positions = <18 19>;
@@ -131,6 +140,22 @@
     };
 
     behaviors {
+        // Releasing J+K must not cancel a U hold acquired during the handoff.
+        mouse_hold: mouse_hold {
+            compatible = "zmk,behavior-mouse-hold";
+            #binding-cells = <0>;
+            layer = <L_MOUSE_HOLD>;
+        };
+
+        u_mouse: u_mouse {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <200>;
+            quick-tap-ms = <0>;
+            bindings = <&mouse_hold>, <&kp>;
+        };
+
         // An unused Shift hold waits for one key for 200ms after release.
         z_sticky: z_sticky {
             compatible = "zmk,behavior-sticky-key";
@@ -145,7 +170,7 @@
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "tap-preferred";
-            tapping-term-ms = <200>;
+            tapping-term-ms = <250>;
             quick-tap-ms = <0>;
             bindings = <&shift_hold>, <&z_tap>;
         };
@@ -201,13 +226,13 @@
         compatible = "zmk,keymap";
 
         BASE {
-            // Left thumb: IME only, Space/NUM, HENKAN/NAV. Z holds Shift.
-            // Right thumb: Enter/SYSTEM and Backspace; bottom-right: Esc/FUNCTION.
+            // Left thumb: IME only, Space/NUM, Esc/NAV. Z holds Shift.
+            // Right thumb: Enter/SYSTEM and Backspace; bottom-right: momentary FUNCTION only.
             bindings = <
-&kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &lt L_MOUSE_HOLD U  &kp I      &kp O    &kp P
+&kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &u_mouse 0 U  &kp I      &kp O    &kp P
 &kp A             &kp S         &kp D         &kp F                   &kp G        &kp LS(LG(S))    &kp MINUS  &kp H        &kp J  &kp K      &kp L    &lt L_SLOW JP_SQT
 &z_shift         &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &kp N        &lt L_SCROLL M  &kp COMMA  &kp DOT  &kp SLASH
-&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_toggle LANG1  &lt L_NUM SPACE  &lt L_NAV INT_HENKAN  &lt L_SYSTEM ENTER  &kp BACKSPACE                     &lt L_FN ESCAPE
+&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_toggle LANG1  &lt L_NUM SPACE  &lt L_NAV ESCAPE  &lt L_SYSTEM ENTER  &kp BACKSPACE                     &mo L_FN
             >;
 
             sensor-bindings = <&inc_dec_kp PG_UP PAGE_DOWN>;
@@ -228,7 +253,7 @@
             bindings = <POINTING_BINDINGS>;
         };
 
-        // Independent of the automatic timeout; released with the U hold.
+        // Independent of the automatic timeout; released after the last U/J+K hold.
         MOUSE_HOLD {
             bindings = <POINTING_BINDINGS>;
         };

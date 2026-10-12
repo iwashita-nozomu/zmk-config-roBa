@@ -32,8 +32,8 @@ LAYERS = {
            re.search(r"bindings\s*=\s*<(.*?)>;", body, re.DOTALL)[1].split("&")[1:]]
     for name, body in BLOCKS
 }
-MOUSE_KEYS = ["&kp LC(C)", "&mo 3", "&mkp MB1", "&mkp MB2", "&kp LC(V)"]
-LETTERS = ["&lt 3 U" if key == "U" else "&kp " + key for key in "YUIOP"]
+MOUSE_KEYS = ["&kp LC(C)", "&mouse_hold", "&mkp MB1", "&mkp MB2", "&kp LC(V)"]
+LETTERS = ["&u_mouse 0 U" if key == "U" else "&kp " + key for key in "YUIOP"]
 ARROWS = ["&kp " + key + "_ARROW" for key in ("LEFT", "DOWN", "UP", "RIGHT")]
 
 
@@ -56,11 +56,11 @@ class KeymapTests(unittest.TestCase):
 
     def test_base_entrypoints(self):
         expected = {
-            6: "&lt 3 U", 21: "&lt 4 LS(NUMBER_7)", 7: "&kp I", 16: "&kp MINUS", 17: "&kp H",
+            6: "&u_mouse 0 U", 21: "&lt 4 LS(NUMBER_7)", 7: "&kp I", 16: "&kp MINUS", 17: "&kp H",
             29: "&kp N", 30: "&lt 8 M",
             37: "&ime_toggle LANG1", 38: "&lt 5 SPACE",
-            39: "&lt 6 INT_HENKAN", 40: "&lt 9 ENTER",
-            41: "&kp BACKSPACE", 42: "&lt 7 ESCAPE",
+            39: "&lt 6 ESCAPE", 40: "&lt 9 ENTER",
+            41: "&kp BACKSPACE", 42: "&mo 7",
         }
         for position, binding in expected.items():
             with self.subTest(position=position):
@@ -76,8 +76,8 @@ class KeymapTests(unittest.TestCase):
         self.assertEqual(LAYERS["IME_ALT"][37], "&ime_toggle LANG2")
         self.assertEqual(LAYERS["BASE"][37], "&ime_toggle LANG1")
         self.assertEqual(LAYERS["BASE"][38], "&lt 5 SPACE")
-        self.assertEqual(LAYERS["BASE"][39], "&lt 6 INT_HENKAN")
-        # Dedicated HENKAN is separate from the LANG toggle and SYSTEM.
+        self.assertEqual(LAYERS["BASE"][39], "&lt 6 ESCAPE")
+        # Thumb Esc is separate from the LANG toggle and SYSTEM.
         self.assertNotIn("lt_ime", EXPANDED)
 
     def test_thumb_ime_and_nav_survive_all_layer_combinations(self):
@@ -86,7 +86,7 @@ class KeymapTests(unittest.TestCase):
             with self.subTest(active=sorted(active)):
                 code = "LANG2" if "IME_ALT" in active else "LANG1"
                 self.assertEqual(resolve(active, 37), f"&ime_toggle {code}")
-                self.assertEqual(resolve(active, 39), "&lt 6 INT_HENKAN")
+                self.assertEqual(resolve(active, 39), "&lt 6 ESCAPE")
 
     def test_ime_bit_is_transparent_to_other_keys_and_sensors(self):
         self.assertEqual(
@@ -139,7 +139,7 @@ class KeymapTests(unittest.TestCase):
         self.assertNotIn('lazy;', sticky)  # Shift must also be visible to mouse clicks.
         self.assertEqual(re.findall(r"&([a-z_]+)", sticky), ["kp"])
         self.assertIn('compatible = "zmk,behavior-hold-tap";', hold)
-        self.assertIn('tapping-term-ms = <200>;', hold)
+        self.assertIn('tapping-term-ms = <250>;', hold)
         self.assertIn('flavor = "tap-preferred";', hold)
         self.assertIn('quick-tap-ms = <0>;', hold)
         self.assertEqual(re.findall(r"&([a-z_]+)", hold), ["shift_hold", "z_tap"])
@@ -167,7 +167,7 @@ class KeymapTests(unittest.TestCase):
         self.assertIn('mods = <(MOD_LSFT | MOD_RSFT)>;', morph)
         self.assertIn('keep-mods = <(MOD_LSFT | MOD_RSFT)>;', morph)
         drawer = (Path(__file__).resolve().parents[1] / "keymap_drawer.config.yaml").read_text()
-        self.assertIn('"&z_shift": {"t": "Z", "h": "Shift + 200ms"}', drawer)
+        self.assertIn('"&z_shift": {"t": "Z", "h": "Shift 250 / +200ms"}', drawer)
 
     def test_z_typing_exits_only_automatic_mouse_and_preserves_press_release(self):
         tap = re.search(r"(?s)z_tap:\s*\w+\s*\{(.*?)\};", EXPANDED)[1]
@@ -183,8 +183,8 @@ class KeymapTests(unittest.TestCase):
         for layer in ("MOUSE", "MOUSE_HOLD", "SLOW", "SCROLL"):
             self.assertEqual(resolve({"BASE", layer}, 22), "&z_shift")
 
-    def test_nav_conversion_keeps_space_num_and_momentary_hold(self):
-        self.assertIn("&lt L_NAV INT_HENKAN", SOURCE)
+    def test_nav_escape_keeps_space_num_and_momentary_hold(self):
+        self.assertIn("&lt L_NAV ESCAPE", SOURCE)
         self.assertNotIn("&lt L_NAV SPACE", SOURCE)
         self.assertNotIn("&lt L_NAV TAB", SOURCE)
         self.assertNotIn("&mo L_NAV", SOURCE)
@@ -193,21 +193,22 @@ class KeymapTests(unittest.TestCase):
         for flags in itertools.product((False, True), repeat=len(LAYER_NAMES) - 1):
             active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
             self.assertEqual(resolve(active, 38), "&lt 5 SPACE")
-            self.assertEqual(resolve(active, 39), "&lt 6 INT_HENKAN")
+            self.assertEqual(resolve(active, 39), "&lt 6 ESCAPE")
         for name, code in (("tab", "TAB"), ("shift_tab", "LS(TAB)")):
             body = re.search(rf"(?s)\b{name}\s*\{{(.*?)\}};", EXPANDED)[1]
             self.assertIn(f"bindings = <&kp {code}>;", body)
 
-    def test_henkan_is_a_dedicated_usage_not_space_or_ime_toggle(self):
-        bindings = [(name, p, key) for name, keys in LAYERS.items()
-                    for p, key in enumerate(keys) if "INT_HENKAN" in key]
-        self.assertEqual(bindings, [("BASE", 39, "&lt 6 INT_HENKAN")])
+    def test_thumb_escape_replaces_conversion_and_old_escape_is_fn_only(self):
+        self.assertNotIn("INT_HENKAN", EXPANDED)
+        self.assertEqual(LAYERS["BASE"][39], "&lt 6 ESCAPE")
         self.assertEqual(LAYERS["BASE"][38], "&lt 5 SPACE")
+        self.assertEqual(LAYERS["BASE"][42], "&mo 7")
+        self.assertNotIn("&lt L_FN ESCAPE", SOURCE)
         macro = re.search(r"(?s)ime_toggle:\s*\w+\s*\{(.*?)\};", EXPANDED)[1]
-        self.assertNotIn("INT_HENKAN", macro)
+        self.assertNotIn("ESCAPE", macro)
         self.assertNotIn("SPACE", macro)
         drawer = (Path(__file__).resolve().parents[1] / "keymap_drawer.config.yaml").read_text()
-        self.assertIn('"&lt L_NAV INT_HENKAN": {"t": "HENKAN", "h": "NAV"}', drawer)
+        self.assertIn('"&lt L_NAV ESCAPE": {"t": "ESC", "h": "NAV"}', drawer)
 
     def test_num_digits_use_shiftable_number_row_codes(self):
         positions = (22, 23, 24, 25, 11, 12, 13, 1, 2, 3)  # 0..9
@@ -271,13 +272,13 @@ class KeymapTests(unittest.TestCase):
         for flags in itertools.product((False, True), repeat=len(LAYER_NAMES) - 1):
             active = {"BASE"} | {name for name, flag in zip(LAYER_NAMES[1:], flags) if flag}
             with self.subTest(active=sorted(active)):
-                self.assertEqual(resolve(active, 42), "&lt 7 ESCAPE")
+                self.assertEqual(resolve(active, 42), "&mo 7")
                 self.assertEqual(resolve(active, 40), "&lt 9 ENTER")
                 expected_delete = "&kp DEL" if "FUNCTION" in active else "&kp BACKSPACE"
                 self.assertEqual(resolve(active, 41), expected_delete)
                 self.assertEqual(resolve(active - {"FUNCTION"}, 41), "&kp BACKSPACE")
                 self.assertEqual(resolve(active - {"SYSTEM"}, 40), "&lt 9 ENTER")
-                self.assertEqual(resolve(active - {"FUNCTION"}, 42), "&lt 7 ESCAPE")
+                self.assertEqual(resolve(active - {"FUNCTION"}, 42), "&mo 7")
                 if "SYSTEM" in active:
                     expected_top = [f"&bt BT_SEL {i}" for i in range(5)]
                 elif "SCROLL" in active:
@@ -304,17 +305,18 @@ class KeymapTests(unittest.TestCase):
             self.assertEqual([resolve(underlying, p) for p in range(5, 10)], expected)
 
     def test_function_system_entry_and_release_orders_in_lookup_model(self):
-        # Layer-tap bindings keep their tap key and own only their held layer.
-        expected = {40: ("SYSTEM", "ENTER"), 42: ("FUNCTION", "ESCAPE")}
+        # SYSTEM is a layer-tap; FUNCTION is an immediate momentary layer.
+        expected = {40: ("&lt", "SYSTEM", "ENTER"), 42: ("&mo", "FUNCTION", None)}
         for press_order in itertools.permutations(expected):
             for release_order in itertools.permutations(expected):
                 active = {"BASE", "NUM"}
                 held = {}
                 for position in press_order:
-                    behavior, layer, tap = resolve(active, position).split()
+                    binding = resolve(active, position).split()
+                    behavior, layer = binding[:2]
+                    tap = binding[2] if len(binding) == 3 else None
                     target = LAYER_NAMES[int(layer)]
-                    self.assertEqual(behavior, "&lt")
-                    self.assertEqual((target, tap), expected[position])
+                    self.assertEqual((behavior, target, tap), expected[position])
                     held[position] = target
                     active.add(target)
                 for position in release_order:
@@ -344,8 +346,8 @@ class KeymapTests(unittest.TestCase):
         self.assertEqual(
             resolve({"BASE", "MOUSE"}, 37), "&ime_toggle LANG1"
         )
-        self.assertEqual(resolve({"BASE", "MOUSE"}, 39), "&lt 6 INT_HENKAN")
-        self.assertEqual(resolve({"BASE", "MOUSE"}, 42), "&lt 7 ESCAPE")
+        self.assertEqual(resolve({"BASE", "MOUSE"}, 39), "&lt 6 ESCAPE")
+        self.assertEqual(resolve({"BASE", "MOUSE"}, 42), "&mo 7")
 
     def test_mouse_exit_keeps_manual_layers_in_lookup_model(self):
         # Read the target from the macro; behavior semantics are checked above.
@@ -407,12 +409,12 @@ class KeymapTests(unittest.TestCase):
 
     def test_combos_do_not_capture_manual_layer_keys(self):
         combos = re.findall(
-            r"\b(tab|shift_tab|exit_mouse|double_quotation|eq|middle_click)\s*\{(.*?)\};",
+            r"\b(tab|shift_tab|exit_mouse|double_quotation|eq|middle_click|mouse_entry)\s*\{(.*?)\};",
             EXPANDED, re.DOTALL,
         )
         expected = {
             "tab": (11, 12), "shift_tab": (12, 13), "exit_mouse": (11, 10),
-            "double_quotation": (20, 21), "eq": (24, 25), "middle_click": (18, 19),
+            "double_quotation": (20, 21), "eq": (24, 25), "middle_click": (18, 19), "mouse_entry": (18, 19),
         }
         self.assertEqual(len(combos), len(expected))
         self.assertEqual(len(re.findall(r"key-positions\s*=", EXPANDED)), len(expected))
@@ -420,7 +422,7 @@ class KeymapTests(unittest.TestCase):
             layers = tuple(map(int, re.search(r"layers\s*=\s*<(.*?)>", body)[1].split()))
             # Middle click belongs only to pointer layers; quote excludes SLOW.
             expected_layers = ((2, 3, 4, 8) if name == "middle_click" else
-                               (0, 1) if name == "double_quotation" else (0, 1, 2, 3, 4))
+                               (0, 1) if name in ("double_quotation", "mouse_entry") else (0, 1, 2, 3, 4))
             self.assertEqual(layers, expected_layers)
             positions = tuple(map(int, re.search(r"key-positions\s*=\s*<(.*?)>", body)[1].split()))
             self.assertEqual(positions, expected[name])
@@ -576,10 +578,10 @@ class KeymapTests(unittest.TestCase):
         self.assertEqual(resolve({"BASE"}, 7), "&kp I")
 
     def test_manual_mouse_survives_automatic_expiry(self):
-        self.assertEqual(LAYERS["BASE"][6], "&lt 3 U")
+        self.assertEqual(LAYERS["BASE"][6], "&u_mouse 0 U")
         for name in ("MOUSE", "MOUSE_HOLD", "SLOW", "SCROLL"):
             self.assertEqual(LAYERS[name], LAYERS["MOUSE"])
-            self.assertEqual(LAYERS[name][6], "&mo 3")
+            self.assertEqual(LAYERS[name][6], "&mouse_hold")
         # The automatic owner controls layer 2, never the momentary layer 3.
         active = {"BASE", "MOUSE", "MOUSE_HOLD"}
         active.remove("MOUSE")
@@ -596,15 +598,15 @@ class KeymapTests(unittest.TestCase):
         self.assertNotIn("shared_mo", SOURCE)
         self.assertNotIn("mouse_lt", SOURCE)
         entries = [(name, p) for name, keys in LAYERS.items() for p, key in enumerate(keys)
-                   if re.match(r"&(?:mo|lt) 3(?: |$)", key)]
+                   if key in ("&u_mouse 0 U", "&mouse_hold")]
         self.assertEqual(entries, [(name, 6) for name in ("BASE", "MOUSE", "MOUSE_HOLD", "SLOW", "SCROLL")])
         for active in ({"BASE"}, {"BASE", "IME_ALT"}):
-            self.assertEqual(resolve(active, 6), "&lt 3 U")
+            self.assertEqual(resolve(active, 6), "&u_mouse 0 U")
             self.assertEqual(resolve(active, 21), "&lt 4 LS(NUMBER_7)")
             self.assertEqual(resolve(active, 29), "&kp N")
             self.assertEqual(resolve(active, 30), "&lt 8 M")
         for layer in ("MOUSE", "MOUSE_HOLD", "SLOW", "SCROLL"):
-            self.assertEqual(resolve({"BASE", layer}, 6), "&mo 3")
+            self.assertEqual(resolve({"BASE", layer}, 6), "&mouse_hold")
             self.assertEqual(resolve({"BASE", layer}, 7), "&mkp MB1")
             self.assertEqual(resolve({"BASE", layer}, 21), "&mo 4")
         self.assertEqual(resolve({"BASE", "NUM"}, 6), "&kp LS(NUMBER_6)")
