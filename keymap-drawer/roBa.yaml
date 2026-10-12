@@ -23,7 +23,7 @@ layers:
   - K
   - L
   - {t: '''', h: SLOW}
-  - {t: Z, h: Shift + 200ms}
+  - {t: Z, h: Shift 250 / +200ms}
   - X
   - C
   - V
@@ -40,10 +40,10 @@ layers:
   - LEFT ALT
   - IME ON
   - {t: SPACE, h: NUM}
-  - {t: HENKAN, h: NAV}
+  - {t: ESC, h: NAV}
   - {t: ENTER, h: SYSTEM}
   - BACKSPACE
-  - {t: ESCAPE, h: FUNCTION}
+  - FUNCTION
   IME_ALT:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -95,7 +95,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - Ctl+C
-  - MOUSE_HOLD
+  - {t: MOUSE_HOLD, type: layer_activator}
   - '&mkp MB1'
   - '&mkp MB2'
   - Ctl+V
@@ -139,7 +139,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - Ctl+C
-  - {t: MOUSE_HOLD, type: held}
+  - {t: MOUSE_HOLD, type: layer_activator}
   - '&mkp MB1'
   - '&mkp MB2'
   - Ctl+V
@@ -183,7 +183,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - Ctl+C
-  - MOUSE_HOLD
+  - {t: MOUSE_HOLD, type: layer_activator}
   - '&mkp MB1'
   - '&mkp MB2'
   - Ctl+V
@@ -359,7 +359,7 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - Ctl+C
-  - MOUSE_HOLD
+  - {t: MOUSE_HOLD, type: layer_activator}
   - '&mkp MB1'
   - '&mkp MB2'
   - Ctl+V
@@ -441,6 +441,9 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
 combos:
+- p: [18, 19]
+  k: {t: MOUSE_HOLD, type: layer_activator}
+  l: [BASE, IME_ALT]
 - p: [18, 19]
   k: '&mkp MB3'
   l: [MOUSE, MOUSE_HOLD, SLOW, SCROLL]
