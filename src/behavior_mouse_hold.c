@@ -11,40 +11,46 @@
 #include <zmk/keymap.h>
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
-BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1);
-BUILD_ASSERT(DT_INST_PROP(0, layer) < ZMK_KEYMAP_LAYERS_LEN);
+/* Each configured pointing layer has independent paired holds: F/U/J+K for
+ * MOUSE_HOLD and G/right SLOW. Standard mo drops the layer on either release.
+ * AUTO and SCROLL keep their existing owners; no timer is added here. */
+struct hold_config {
+    uint8_t layer;
+};
 
-/* U and BASE J+K have independent, paired press/release lifetimes. Standard mo
- * deactivates on either release. Share only this manual layer; AUTO and
- * SCROLL/SLOW retain their existing owners and timers. */
-static uint32_t holds;
-static uint8_t held_layer;
+struct hold_data {
+    uint32_t holds;
+    uint8_t held_layer;
+};
+
 K_MUTEX_DEFINE(hold_lock);
 
-static int change_hold(bool pressed) {
+static int change_hold(const struct device *dev, bool pressed) {
+    const struct hold_config *config = dev->config;
+    struct hold_data *data = dev->data;
     int err = 0;
     k_mutex_lock(&hold_lock, K_FOREVER);
     if (pressed) {
-        if (holds == UINT32_MAX) {
+        if (data->holds == UINT32_MAX) {
             err = -EOVERFLOW;
         } else {
-            if (holds == 0) {
-                held_layer = zmk_keymap_layer_index_to_id(DT_INST_PROP(0, layer));
-                err = zmk_keymap_layer_activate(held_layer);
+            if (data->holds == 0) {
+                data->held_layer = zmk_keymap_layer_index_to_id(config->layer);
+                err = zmk_keymap_layer_activate(data->held_layer);
             }
             if (err == 0) {
-                ++holds;
+                ++data->holds;
             }
         }
-    } else if (holds == 0) {
+    } else if (data->holds == 0) {
         err = -EINVAL;
     } else {
         /* Keep the acquired stable ID even if Studio reorders layers. */
-        if (holds == 1) {
-            err = zmk_keymap_layer_deactivate(held_layer);
+        if (data->holds == 1) {
+            err = zmk_keymap_layer_deactivate(data->held_layer);
         }
         if (err == 0) {
-            --holds;
+            --data->holds;
         }
     }
     k_mutex_unlock(&hold_lock);
@@ -53,16 +59,14 @@ static int change_hold(bool pressed) {
 
 static int hold_pressed(struct zmk_behavior_binding *binding,
                         struct zmk_behavior_binding_event event) {
-    ARG_UNUSED(binding);
     ARG_UNUSED(event);
-    return change_hold(true);
+    return change_hold(zmk_behavior_get_binding(binding->behavior_dev), true);
 }
 
 static int hold_released(struct zmk_behavior_binding *binding,
                          struct zmk_behavior_binding_event event) {
-    ARG_UNUSED(binding);
     ARG_UNUSED(event);
-    return change_hold(false);
+    return change_hold(zmk_behavior_get_binding(binding->behavior_dev), false);
 }
 
 static const struct behavior_driver_api api = {
@@ -73,6 +77,12 @@ static const struct behavior_driver_api api = {
 #endif
 };
 
-BEHAVIOR_DT_INST_DEFINE(0, NULL, NULL, NULL, NULL, POST_KERNEL,
-                        CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, &api);
+#define HOLD_INST(n)                                                                                \
+    BUILD_ASSERT(DT_INST_PROP(n, layer) < ZMK_KEYMAP_LAYERS_LEN);                                     \
+    static const struct hold_config config_##n = {.layer = DT_INST_PROP(n, layer)};                   \
+    static struct hold_data data_##n;                                                               \
+    BEHAVIOR_DT_INST_DEFINE(n, NULL, NULL, &data_##n, &config_##n, POST_KERNEL,                        \
+                            CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, &api);
+
+DT_INST_FOREACH_STATUS_OKAY(HOLD_INST)
 #endif
