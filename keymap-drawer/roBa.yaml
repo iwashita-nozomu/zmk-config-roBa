@@ -14,8 +14,8 @@ layers:
   - A
   - S
   - D
-  - F
-  - G
+  - {t: F, h: MOUSE_HOLD}
+  - {t: G, h: SLOW}
   - Sft+Gui+S
   - {t: '-', s: '='}
   - H
@@ -102,15 +102,15 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - {t: MOUSE_HOLD, type: layer_activator}
+  - {t: SLOW, type: layer_activator}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - ''
   - ''
   - {t: ▽, type: trans}
-  - SLOW
+  - {t: SLOW, type: layer_activator}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -146,15 +146,15 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - {t: MOUSE_HOLD, type: layer_activator}
+  - {t: SLOW, type: layer_activator}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - ''
   - ''
   - {t: ▽, type: trans}
-  - SLOW
+  - {t: SLOW, type: layer_activator}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -190,15 +190,15 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - {t: MOUSE_HOLD, type: layer_activator}
+  - {t: SLOW, type: layer_activator}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - ''
   - ''
   - {t: ▽, type: trans}
-  - {t: SLOW, type: held}
+  - {t: SLOW, type: layer_activator}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -278,7 +278,7 @@ layers:
   - HOME
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - F
   - END
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -322,8 +322,8 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - F
+  - G
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - F6
@@ -366,15 +366,15 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - {t: MOUSE_HOLD, type: layer_activator}
+  - {t: SLOW, type: layer_activator}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - ''
   - ''
   - {t: ▽, type: trans}
-  - SLOW
+  - {t: SLOW, type: layer_activator}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -410,8 +410,8 @@ layers:
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - F
+  - G
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
   - {t: '1', s: '!'}
