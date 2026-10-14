@@ -8,7 +8,7 @@ layers:
   - T
   - Y
   - {t: U, h: MOUSE_HOLD}
-  - I
+  - {t: I, h: MOUSE_HOLD}
   - O
   - P
   - A
