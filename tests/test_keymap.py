@@ -33,7 +33,7 @@ LAYERS = {
     for name, body in BLOCKS
 }
 MOUSE_KEYS = ["&kp LC(C)", "&mouse_hold", "&mkp MB1", "&mkp MB2", "&kp LC(V)"]
-LETTERS = ["&u_mouse 0 U" if key == "U" else "&kp " + key for key in "YUIOP"]
+LETTERS = [("&u_mouse 0 " if key in "UI" else "&kp ") + key for key in "YUIOP"]
 ARROWS = ["&kp " + key + "_ARROW" for key in ("LEFT", "DOWN", "UP", "RIGHT")]
 
 
@@ -56,7 +56,7 @@ class KeymapTests(unittest.TestCase):
 
     def test_base_entrypoints(self):
         expected = {
-            6: "&u_mouse 0 U", 21: "&slow_tap 0 LS(NUMBER_7)", 7: "&kp I", 13: "&u_mouse 0 F", 14: "&slow_tap 0 G", 16: "&kp MINUS", 17: "&kp H",
+            6: "&u_mouse 0 U", 21: "&slow_tap 0 LS(NUMBER_7)", 7: "&u_mouse 0 I", 13: "&u_mouse 0 F", 14: "&slow_tap 0 G", 16: "&kp MINUS", 17: "&kp H",
             29: "&kp N", 30: "&lt 8 M",
             37: "&ime_toggle LANG1", 38: "&lt 5 SPACE",
             39: "&nav_hold 6 0", 40: "&lt 9 ESCAPE",
@@ -595,7 +595,7 @@ class KeymapTests(unittest.TestCase):
                 self.assertEqual(resolve(active, position), resolve(active - {"MOUSE"}, position))
         self.assertEqual(resolve({"BASE", "MOUSE"}, 10), "&kp A")
         self.assertEqual(resolve({"BASE", "MOUSE"}, 29), "&kp N")
-        self.assertEqual(resolve({"BASE"}, 7), "&kp I")
+        self.assertEqual(resolve({"BASE"}, 7), "&u_mouse 0 I")
 
     def test_manual_mouse_survives_automatic_expiry(self):
         self.assertEqual(LAYERS["BASE"][6], "&u_mouse 0 U")
@@ -618,8 +618,8 @@ class KeymapTests(unittest.TestCase):
         self.assertNotIn("shared_mo", SOURCE)
         self.assertNotIn("mouse_lt", SOURCE)
         entries = [(name, p) for name, keys in LAYERS.items() for p, key in enumerate(keys)
-                   if key in ("&u_mouse 0 U", "&u_mouse 0 F", "&mouse_hold")]
-        self.assertEqual(entries, [(name, p) for name in ("BASE", "MOUSE", "MOUSE_HOLD", "SLOW", "SCROLL") for p in (6, 13)])
+                   if key in ("&u_mouse 0 U", "&u_mouse 0 I", "&u_mouse 0 F", "&mouse_hold")]
+        self.assertEqual(entries, [(name, p) for name in ("BASE", "MOUSE", "MOUSE_HOLD", "SLOW", "SCROLL") for p in ((6, 7, 13) if name == "BASE" else (6, 13))])
         for active in ({"BASE"}, {"BASE", "IME_ALT"}):
             self.assertEqual(resolve(active, 6), "&u_mouse 0 U")
             self.assertEqual(resolve(active, 21), "&slow_tap 0 LS(NUMBER_7)")
@@ -701,6 +701,20 @@ class KeymapTests(unittest.TestCase):
         combo = re.search(r"(?s)\bshift_tab\s*\{(.*?)\};", EXPANDED)[1]
         self.assertIn('key-positions = <12 13>;', combo)
         self.assertIn('bindings = <&kp LS(TAB)>;', combo)
+
+    def test_i_mouse_entry_keeps_pointer_click_and_upper_layer_outputs(self):
+        for active in ({"BASE"}, {"BASE", "IME_ALT"}):
+            self.assertEqual(resolve(active, 7), "&u_mouse 0 I")
+        for layer in ("MOUSE", "MOUSE_HOLD", "SLOW", "SCROLL"):
+            self.assertEqual(resolve({"BASE", layer}, 7), "&mkp MB1")
+        expected = {"NUM": "&kp LS(EQUAL)", "NAV": "&none",
+                    "FUNCTION": "&kp F3", "SYSTEM": "&bt BT_SEL 2"}
+        for layer, binding in expected.items():
+            self.assertEqual(resolve({"BASE", "MOUSE_HOLD", layer}, 7), binding)
+        for positions in re.findall(r"key-positions\s*=\s*<(.*?)>", EXPANDED):
+            self.assertNotIn(7, map(int, positions.split()))
+        drawer = (Path(__file__).resolve().parents[1] / "keymap_drawer.config.yaml").read_text()
+        self.assertIn('"&u_mouse 0 I": {"t": "I", "h": "MOUSE_HOLD"}', drawer)
 
     def test_production_motion_dwell_time_boundaries(self):
         root = Path(__file__).resolve().parents[1]

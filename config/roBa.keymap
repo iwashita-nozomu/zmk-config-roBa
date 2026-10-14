@@ -41,8 +41,10 @@
 #define L_SYSTEM  9
 
 // All pointing layers share controls; manual holds outlive automatic MOUSE.
-// F/U/J+K share MOUSE_HOLD; G/right 21 share SLOW; M scrolls.
+// F/U/I/J+K share MOUSE_HOLD; G/right 21 share SLOW; M scrolls.
 // BASE F/G use 200ms tap-preferred holds; pointing F/G act immediately.
+// BASE I holds MOUSE_HOLD, but a new I press in a pointing layer is MB1.
+// The entry press is not a click; hand off to F/U before re-pressing I.
 // D+F remains Shift+Tab (combo wins); all thumb bindings stay unchanged.
 #define AUTOMOUSE_PROCESSOR &mouse_dwell L_MOUSE 500
 #define POINTING_BINDINGS \
@@ -152,7 +154,7 @@
             bindings = <&mo>, <&none>;
         };
 
-        // F, U and J+K share one owner, so handoffs retain the remaining holds.
+        // F, U, I and J+K share one owner, so handoffs retain the remaining holds.
         mouse_hold: mouse_hold {
             compatible = "zmk,behavior-mouse-hold";
             #binding-cells = <0>;
@@ -175,7 +177,7 @@
             bindings = <&slow_hold>, <&kp>;
         };
 
-        // Reuse the existing U behavior for F, keeping U's saved binding name.
+        // Reuse the existing U behavior for F/I, keeping U's saved binding name.
         u_mouse: u_mouse {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
@@ -258,7 +260,7 @@
             // Left thumb: IME only, Space/NUM, hold-only NAV. Z holds Shift.
             // Right thumb: Esc/SYSTEM and Enter/FUNCTION; bottom-right: dedicated Backspace.
             bindings = <
-&kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &u_mouse 0 U  &kp I      &kp O    &kp P
+&kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &u_mouse 0 U  &u_mouse 0 I  &kp O    &kp P
 &kp A             &kp S         &kp D         &u_mouse 0 F                   &slow_tap 0 G        &kp LS(LG(S))    &kp MINUS  &kp H        &kp J  &kp K      &kp L    &slow_tap 0 JP_SQT
 &z_shift         &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &kp N        &lt L_SCROLL M  &kp COMMA  &kp DOT  &kp SLASH
 &kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_toggle LANG1  &lt L_NUM SPACE  &nav_hold L_NAV 0  &lt L_SYSTEM ESCAPE  &lt L_FN ENTER                     &kp BACKSPACE
@@ -282,7 +284,7 @@
             bindings = <POINTING_BINDINGS>;
         };
 
-        // Independent of the automatic timeout; released after the last F/U/J+K hold.
+        // Independent of the automatic timeout; released after the last F/U/I/J+K hold.
         MOUSE_HOLD {
             bindings = <POINTING_BINDINGS>;
         };

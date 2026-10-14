@@ -7,6 +7,7 @@ parse_config:
     "&slow_tap 0 G": {"t": "G", "h": "SLOW"}
     "&slow_hold": {"t": "SLOW", "type": "layer_activator"}
     "&u_mouse 0 U": {"t": "U", "h": "MOUSE_HOLD"}
+    "&u_mouse 0 I": {"t": "I", "h": "MOUSE_HOLD"}
     "&mouse_hold": {"t": "MOUSE_HOLD", "type": "layer_activator"}
     "&z_shift": {"t": "Z", "h": "Shift 250 / +200ms"}
     "&lt L_SYSTEM ESCAPE": {"t": "ESC", "h": "SYSTEM"}

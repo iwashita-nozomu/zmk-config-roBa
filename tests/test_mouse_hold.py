@@ -73,43 +73,43 @@ static int zmk_keymap_layer_deactivate(uint8_t n) {
 
 REPLAY = r'''
 #include PRODUCTION_SOURCE
-static const uint32_t sources[] = {13, 6, UINT32_MAX - 1, 14, 21};
+static const uint32_t sources[] = {13, 6, UINT32_MAX - 1, 7, 14, 21};
 static int invoke(unsigned source, bool pressed) {
-    struct zmk_behavior_binding b = {.behavior_dev = source < 3 ? "mouse_hold" : "slow_hold"};
+    struct zmk_behavior_binding b = {.behavior_dev = source < 4 ? "mouse_hold" : "slow_hold"};
     struct zmk_behavior_binding_event e = {.position = sources[source]};
     const struct device *dev = zmk_behavior_get_binding(b.behavior_dev);
     return pressed ? dev->api->binding_pressed(&b,e) : dev->api->binding_released(&b,e);
 }
-static unsigned orders[120][5], order_count;
+static unsigned orders[720][6], order_count;
 static void permute(unsigned *order, unsigned n, unsigned used) {
-    if (n == 5) { memcpy(orders[order_count++], order, sizeof(orders[0])); return; }
-    for (unsigned i = 0; i < 5; ++i) {
+    if (n == 6) { memcpy(orders[order_count++], order, sizeof(orders[0])); return; }
+    for (unsigned i = 0; i < 6; ++i) {
         if (!(used & (1u << i))) { order[n] = i; permute(order, n+1, used | (1u << i)); }
     }
 }
 static void check_held(unsigned held) {
-    assert(active[MANUAL_LAYER] == !!(held & 7u));
-    assert(active[SLOW_LAYER] == !!(held & 24u));
+    assert(active[MANUAL_LAYER] == !!(held & 15u));
+    assert(active[SLOW_LAYER] == !!(held & 48u));
     assert(active[2] && active[5] && active[8]); /* AUTO/NUM/SCROLL are independent. */
 }
 int main(void) {
-    for (unsigned i = 0; i < 5; ++i) {
-        unsigned layer = i < 3 ? MANUAL_LAYER : SLOW_LAYER;
+    for (unsigned i = 0; i < 6; ++i) {
+        unsigned layer = i < 4 ? MANUAL_LAYER : SLOW_LAYER;
         assert(invoke(i,true) == 0 && active[layer]);
         assert(invoke(i,false) == 0 && !active[layer]);
     }
-    unsigned order[5]; permute(order,0,0); assert(order_count == 120);
+    unsigned order[6]; permute(order,0,0); assert(order_count == 720);
     for (unsigned p = 0; p < order_count; ++p) {
         for (unsigned r = 0; r < order_count; ++r) {
             unsigned held = 0;
             unsigned starts_mouse = on_count[MANUAL_LAYER], starts_slow = on_count[SLOW_LAYER];
             unsigned stops_mouse = off_count[MANUAL_LAYER], stops_slow = off_count[SLOW_LAYER];
             active[2] = true; active[5] = true; active[8] = true;
-            for (unsigned n = 0; n < 5; ++n) {
+            for (unsigned n = 0; n < 6; ++n) {
                 unsigned s = orders[p][n];
                 assert(invoke(s,true) == 0); held |= 1u << s; check_held(held);
             }
-            for (unsigned n = 0; n < 5; ++n) {
+            for (unsigned n = 0; n < 6; ++n) {
                 unsigned s = orders[r][n];
                 assert(invoke(s,false) == 0); held &= ~(1u << s); check_held(held);
             }
@@ -117,28 +117,30 @@ int main(void) {
             assert(on_count[SLOW_LAYER] == starts_slow+1 && off_count[SLOW_LAYER] == stops_slow+1);
         }
     }
-    puts("PASS: 120 press orders x 120 release orders; independent F/U/JK and G/right SLOW");
+    puts("PASS: 720 press orders x 720 release orders; independent F/U/JK/I and G/right SLOW");
     memset(active,0,sizeof(active));
     for (unsigned i = 0; i < 1000; ++i) {
+        assert(invoke(3,true) == 0); /* I acquires the same owner through BASE hold-tap. */
         assert(invoke(2,true) == 0); assert(invoke(0,true) == 0); assert(invoke(1,true) == 0);
+        assert(invoke(3,false) == 0 && active[MANUAL_LAYER]);
         assert(invoke(2,false) == 0 && active[MANUAL_LAYER]);
         assert(invoke(0,false) == 0 && active[MANUAL_LAYER]);
         assert(invoke(1,false) == 0 && !active[MANUAL_LAYER]);
-        assert(invoke(3,true) == 0); assert(invoke(4,true) == 0);
-        assert(invoke(3,false) == 0 && active[SLOW_LAYER]);
-        assert(invoke(4,false) == 0 && !active[SLOW_LAYER]);
+        assert(invoke(4,true) == 0); assert(invoke(5,true) == 0);
+        assert(invoke(4,false) == 0 && active[SLOW_LAYER]);
+        assert(invoke(5,false) == 0 && !active[SLOW_LAYER]);
     }
     puts("PASS: 1000 mouse and slow handoffs without stuck layers");
-    assert(invoke(0,true) == 0 && invoke(3,true) == 0);
+    assert(invoke(0,true) == 0 && invoke(4,true) == 0);
     mapped_mouse = 5; mapped_slow = 6;
     assert(invoke(0,false) == 0 && !active[MANUAL_LAYER]);
-    assert(invoke(3,false) == 0 && !active[SLOW_LAYER]);
-    assert(invoke(0,true) == 0 && active[5]); assert(invoke(3,true) == 0 && active[6]);
+    assert(invoke(4,false) == 0 && !active[SLOW_LAYER]);
+    assert(invoke(0,true) == 0 && active[5]); assert(invoke(4,true) == 0 && active[6]);
     assert(invoke(0,false) == 0 && !active[5] && active[6]);
-    assert(invoke(3,false) == 0 && !active[6]);
+    assert(invoke(4,false) == 0 && !active[6]);
     mapped_mouse = MANUAL_LAYER; mapped_slow = SLOW_LAYER;
-    for (unsigned i = 0; i < 5; ++i) {
-        unsigned layer = i < 3 ? MANUAL_LAYER : SLOW_LAYER;
+    for (unsigned i = 0; i < 6; ++i) {
+        unsigned layer = i < 4 ? MANUAL_LAYER : SLOW_LAYER;
         assert(invoke(i,false) == -EINVAL);
         failure = -EIO;
         assert(invoke(i,true) == -EIO && !active[layer]);
@@ -160,6 +162,7 @@ class MouseHoldTests(unittest.TestCase):
             self.assertIn(setting, body)
         self.assertEqual(km.LAYERS["BASE"][6], "&u_mouse 0 U")
         self.assertEqual(km.LAYERS["BASE"][13], "&u_mouse 0 F")
+        self.assertEqual(km.LAYERS["BASE"][7], "&u_mouse 0 I")
         for layer in ("MOUSE", "MOUSE_HOLD", "SLOW", "SCROLL"):
             self.assertEqual([km.resolve({"BASE", layer}, p) for p in (6, 7, 8, 13)],
                              ["&mouse_hold", "&mkp MB1", "&mkp MB2", "&mouse_hold"])
