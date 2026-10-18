@@ -157,7 +157,7 @@ int main(void) {
 class MouseHoldTests(unittest.TestCase):
     def test_u_clicks_share_the_combo_owner_without_changing_tap_timing(self):
         body = re.search(r"(?s)u_mouse:\s*\w+\s*\{(.*?)\};", km.EXPANDED)[1]
-        for setting in ('flavor = "tap-preferred";', 'tapping-term-ms = <200>;',
+        for setting in ('flavor = "hold-preferred";', 'tapping-term-ms = <200>;',
                         'quick-tap-ms = <0>;', 'bindings = <&mouse_hold>, <&kp>;'):
             self.assertIn(setting, body)
         self.assertEqual(km.LAYERS["BASE"][6], "&u_mouse 0 U")

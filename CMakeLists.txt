@@ -5,5 +5,7 @@ target_sources_ifdef(CONFIG_PMW3610 app PRIVATE
 
 # Match ZMK's keymap/behavior boundary; peripherals only forward positions.
 if ((NOT CONFIG_ZMK_SPLIT) OR CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
-  target_sources(app PRIVATE ${CMAKE_CURRENT_LIST_DIR}/src/behavior_mouse_hold.c)
+  target_sources(app PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/src/behavior_mouse_hold.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/behavior_shift_hold.c)
 endif()

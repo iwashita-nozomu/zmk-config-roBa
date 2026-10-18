@@ -1,0 +1,9 @@
+description: Synchronously forward Shift hold with the current release timestamp
+compatible: "zmk,behavior-shift-hold"
+include: zero_param.yaml
+
+properties:
+  bindings:
+    type: phandle-array
+    required: true
+    description: One sticky-key binding carrying the Shift keycode

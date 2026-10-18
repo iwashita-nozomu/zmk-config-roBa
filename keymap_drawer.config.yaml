@@ -2,6 +2,9 @@
 # raw_binding_map keys are preprocessed with config/roBa.keymap; no keycode copy.
 parse_config:
   raw_binding_map:
+    "&layer_chord L_NUM SPACE": {"t": "SPACE", "h": "NUM"}
+    "&layer_chord L_FN ENTER": {"t": "ENTER", "h": "FUNCTION"}
+    "&scroll_tap L_SCROLL M": {"t": "M", "h": "SCROLL"}
     "&nav_hold L_NAV 0": {"t": "", "h": "NAV"}
     "&u_mouse 0 F": {"t": "F", "h": "MOUSE_HOLD"}
     "&slow_tap 0 G": {"t": "G", "h": "SLOW"}
@@ -12,8 +15,8 @@ parse_config:
     "&z_shift": {"t": "Z", "h": "Shift 250 / +200ms"}
     "&lt L_SYSTEM ESCAPE": {"t": "ESC", "h": "SYSTEM"}
     "&slow_tap 0 JP_SQT": {"t": "'", "h": "SLOW"}
-    "&ime_toggle LANG1": "IME ON"
-    "&ime_toggle LANG2": "IME OFF"
+    "&ime_ctrl LEFT_CONTROL LANG1": {"t": "IME ON", "h": "CTRL"}
+    "&ime_ctrl LEFT_CONTROL LANG2": {"t": "IME OFF", "h": "CTRL"}
     "&kp JP_SQT": "'"
     "&kp JP_DOUBLE_QUOTES": "\""
     "&kp JP_COLON": {"t": ":", "s": "*"}

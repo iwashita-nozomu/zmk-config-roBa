@@ -42,10 +42,12 @@
 
 // All pointing layers share controls; manual holds outlive automatic MOUSE.
 // F/U/I/J+K share MOUSE_HOLD; G/right 21 share SLOW; M scrolls.
-// BASE F/G use 200ms tap-preferred holds; pointing F/G act immediately.
+// Pointer holds: 200ms alone OR a following U/I/O/F/G/right-SLOW/M press.
+// Other early overlaps resolve to typing; permitted letter pairs can still misfire.
+#define POINTER_CHORD_POSITIONS 6 7 8 13 14 21 30
 // BASE I holds MOUSE_HOLD, but a new I press in a pointing layer is MB1.
 // The entry press is not a click; hand off to F/U before re-pressing I.
-// D+F remains Shift+Tab (combo wins); all thumb bindings stay unchanged.
+// Existing combos keep priority. SYSTEM remains timer-only; IME hold is Ctrl.
 #define AUTOMOUSE_PROCESSOR &mouse_dwell L_MOUSE 500
 #define POINTING_BINDINGS \
     &trans  &trans  &trans  &trans  &trans  &kp LC(C)  &mouse_hold  &mkp MB1  &mkp MB2  &kp LC(V) \
@@ -54,7 +56,7 @@
     &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
 
 &mt {
-    flavor = "balanced";
+    flavor = "hold-preferred";
     quick-tap-ms = <0>;
 };
 
@@ -88,8 +90,8 @@
         min-distance = <32>;
         max-gap-ms = <80>;
         require-prior-idle-ms = <300>;
-        // Preserve Z until hold/tap resolves: only its typing branch exits MOUSE.
-        excluded-positions = <5 6 7 8 9 13 14 18 19 21 22 30 34 35 36>;
+        // Z and IME/Ctrl decide first; their typing/tap branches explicitly exit AUTO.
+        excluded-positions = <5 6 7 8 9 13 14 18 19 21 22 30 34 35 36 37>;
     };
 
     combos {
@@ -144,11 +146,41 @@
     };
 
     behaviors {
-        // Esc moved to 40; keep NAV at 39 with the same hold delay.
+        // NUM/Fn accept chords, while the standard &lt remains timer-only for SYSTEM.
+        layer_chord: layer_chord {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "hold-preferred";
+            tapping-term-ms = <200>;
+            quick-tap-ms = <0>;
+            bindings = <&mo>, <&kp>;
+        };
+
+        // Tap calls the existing LANG macro; holding never changes its send-order bit.
+        ime_ctrl: ime_ctrl {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "hold-preferred";
+            tapping-term-ms = <200>;
+            quick-tap-ms = <0>;
+            bindings = <&kp>, <&ime_toggle>;
+        };
+
+        scroll_tap: scroll_tap {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "hold-preferred";
+            tapping-term-ms = <200>;
+            quick-tap-ms = <0>;
+            hold-trigger-key-positions = <POINTER_CHORD_POSITIONS>;
+            bindings = <&mo>, <&kp>;
+        };
+
+        // NAV keeps its 200ms single hold and also resolves on another key press.
         nav_hold: nav_hold {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "tap-preferred";
+            flavor = "hold-preferred";
             tapping-term-ms = <200>;
             quick-tap-ms = <0>;
             bindings = <&mo>, <&none>;
@@ -171,9 +203,10 @@
         slow_tap: slow_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "tap-preferred";
+            flavor = "hold-preferred";
             tapping-term-ms = <200>;
             quick-tap-ms = <0>;
+            hold-trigger-key-positions = <POINTER_CHORD_POSITIONS>;
             bindings = <&slow_hold>, <&kp>;
         };
 
@@ -181,10 +214,18 @@
         u_mouse: u_mouse {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "tap-preferred";
+            flavor = "hold-preferred";
             tapping-term-ms = <200>;
             quick-tap-ms = <0>;
+            hold-trigger-key-positions = <POINTER_CHORD_POSITIONS>;
             bindings = <&mouse_hold>, <&kp>;
+        };
+
+        // Synchronous Shift before the interrupting key; refresh the stale release timestamp.
+        shift_hold: shift_hold {
+            compatible = "zmk,behavior-shift-hold";
+            #binding-cells = <0>;
+            bindings = <&z_sticky LEFT_SHIFT>;
         };
 
         // An unused Shift hold waits for one key for 200ms after release.
@@ -200,7 +241,7 @@
         z_hold: z_hold {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "tap-preferred";
+            flavor = "hold-preferred";
             tapping-term-ms = <250>;
             quick-tap-ms = <0>;
             bindings = <&shift_hold>, <&z_tap>;
@@ -223,16 +264,6 @@
     };
 
     macros {
-        // Hold-tap forwards the initial press timestamp even on release.
-        // The standard queue timestamps execution, so grace starts at release.
-        shift_hold: shift_hold {
-            compatible = "zmk,behavior-macro";
-            #binding-cells = <0>;
-            wait-ms = <0>;
-            bindings = <&macro_press &z_sticky LEFT_SHIFT
-                        &macro_pause_for_release &macro_release &z_sticky LEFT_SHIFT>;
-        };
-
         // Exit only on typing, not on the undecided Z press or its Shift hold.
         // Forward press/release rather than inserting a fixed-duration Z tap.
         z_tap: z_tap {
@@ -257,13 +288,13 @@
         compatible = "zmk,keymap";
 
         BASE {
-            // Left thumb: IME only, Space/NUM, hold-only NAV. Z holds Shift.
+            // Left thumb: IME/Ctrl, Space/NUM, hold-only NAV. Z holds Shift.
             // Right thumb: Esc/SYSTEM and Enter/FUNCTION; bottom-right: dedicated Backspace.
             bindings = <
 &kp Q             &kp W         &kp E         &kp R                   &kp T                                               &kp Y        &u_mouse 0 U  &u_mouse 0 I  &kp O    &kp P
 &kp A             &kp S         &kp D         &u_mouse 0 F                   &slow_tap 0 G        &kp LS(LG(S))    &kp MINUS  &kp H        &kp J  &kp K      &kp L    &slow_tap 0 JP_SQT
-&z_shift         &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &kp N        &lt L_SCROLL M  &kp COMMA  &kp DOT  &kp SLASH
-&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_toggle LANG1  &lt L_NUM SPACE  &nav_hold L_NAV 0  &lt L_SYSTEM ESCAPE  &lt L_FN ENTER                     &kp BACKSPACE
+&z_shift         &kp X         &kp C         &kp V                   &kp B        &kp JP_COLON        &kp SEMICOLON       &kp N        &scroll_tap L_SCROLL M  &kp COMMA  &kp DOT  &kp SLASH
+&kp LCTRL         &kp LEFT_WIN  &kp LEFT_ALT  &ime_ctrl LEFT_CONTROL LANG1  &layer_chord L_NUM SPACE  &nav_hold L_NAV 0  &lt L_SYSTEM ESCAPE  &layer_chord L_FN ENTER                     &kp BACKSPACE
             >;
 
             sensor-bindings = <&inc_dec_kp PG_UP PAGE_DOWN>;
@@ -276,7 +307,7 @@
 &trans  &trans  &trans  &trans  &trans                              &trans  &trans  &trans  &trans  &trans
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &trans
 &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &ime_toggle LANG2  &trans  &trans      &trans  &trans                  &trans
+&trans  &trans  &trans  &ime_ctrl LEFT_CONTROL LANG2  &trans  &trans      &trans  &trans                  &trans
             >;
         };
 
