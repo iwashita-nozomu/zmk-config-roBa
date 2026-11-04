@@ -695,7 +695,7 @@ class KeymapTests(unittest.TestCase):
         tap = re.search(r"(?s)slow_tap:\s*\w+\s*\{(.*?)\};", EXPANDED)[1]
         self.assertIn('compatible = "zmk,behavior-mouse-hold";', hold)
         self.assertIn('layer = <4>;', hold)
-        for setting in ('flavor = "hold-preferred";', 'tapping-term-ms = <200>;',
+        for setting in ('flavor = "tap-preferred";', 'tapping-term-ms = <200>;',
                         'quick-tap-ms = <0>;', 'bindings = <&slow_hold>, <&kp>;'):
             self.assertIn(setting, tap)
         self.assertNotRegex(EXPANDED, r"&(?:mo|lt) 4\b")

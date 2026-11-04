@@ -18,21 +18,17 @@ def node(name):
 
 
 def decision(name, elapsed, other=None, released=False):
-    """Reference model of documented hold-preferred positional semantics.
+    """Reference model of the configured tap/hold-preferred interrupt flavors.
 
     One deciding event only; this does not run ZMK capture, combos or its timer.
-    A disallowed first overlap chooses tap, not merely a longer wait for hold.
+    Pointer overlaps remain undecided; only release or timeout resolves them.
     """
     body = node(name)
     term = int(re.search(r"tapping-term-ms = <(\d+)>;", body)[1])
     if elapsed >= term:
         return "hold"
-    if other is not None:
-        positions = re.search(r"hold-trigger-key-positions = <(.*?)>;", body)
-        if positions and other not in set(map(int, positions[1].split())):
-            return "tap"
-        if 'flavor = "hold-preferred";' in body:
-            return "hold"
+    if other is not None and 'flavor = "hold-preferred";' in body:
+        return "hold"
     return "tap" if released else "undecided"
 
 
@@ -111,7 +107,8 @@ class ChordTests(unittest.TestCase):
                  "ime_ctrl": 200, "u_mouse": 200, "slow_tap": 200, "scroll_tap": 200}
         for name, term in terms.items():
             with self.subTest(name=name):
-                self.assertIn('flavor = "hold-preferred";', node(name))
+                flavor = "tap-preferred" if name in ("u_mouse", "slow_tap", "scroll_tap") else "hold-preferred"
+                self.assertIn(f'flavor = "{flavor}";', node(name))
                 self.assertIn('quick-tap-ms = <0>;', node(name))
                 self.assertEqual(decision(name, term-1), "undecided")
                 self.assertEqual(decision(name, term), "hold")
@@ -124,35 +121,42 @@ class ChordTests(unittest.TestCase):
         self.assertIn('quick-release;', node("z_sticky"))
         self.assertIn('ignore-modifiers;', node("z_sticky"))
 
-    def test_pointer_chords_are_limited_and_do_not_redefine_combos(self):
-        allowed = {6, 7, 8, 13, 14, 21, 30}
+    def test_pointer_holds_wait_for_time_without_redefining_combos(self):
+        self.assertNotIn('POINTER_CHORD_POSITIONS', km.SOURCE)
+        self.assertNotIn('hold-trigger-key-positions', km.EXPANDED)
         for name in ("u_mouse", "slow_tap", "scroll_tap"):
-            actual = re.search(r"hold-trigger-key-positions = <(.*?)>;", node(name))[1]
-            self.assertEqual(set(map(int, actual.split())), allowed)
             for p in range(43):
-                self.assertEqual(decision(name, 10, other=p), "hold" if p in allowed else "tap")
+                with self.subTest(behavior=name, other=p):
+                    for elapsed in (10, 199):
+                        self.assertEqual(decision(name, elapsed, other=p), "undecided")
+                        self.assertEqual(decision(name, elapsed, other=p, released=True), "tap")
+                    self.assertEqual(decision(name, 200, other=p), "hold")
         for name in ("z_hold", "layer_chord", "nav_hold", "ime_ctrl"):
-            self.assertNotIn('hold-trigger-key-positions', node(name))
             for p in range(43):
                 self.assertEqual(decision(name, 10, other=p), "hold")
         # Native combo priority/recognition is not simulated by this model.
         self.assertEqual(len(re.findall(r"(?m)^\s*key-positions\s*=", km.EXPANDED)), 7)
 
     def test_requested_first_key_layer_lookups(self):
-        examples = ((38, "layer_chord", 11, "NUM", "&kp NUMBER_4"),
-                    (41, "layer_chord", 42, "FUNCTION", "&kp DEL"),
-                    (39, "nav_hold", 17, "NAV", "&kp LEFT_ARROW"),
-                    (13, "u_mouse", 7, "MOUSE_HOLD", "&mkp MB1"),
-                    (6, "u_mouse", 7, "MOUSE_HOLD", "&mkp MB1"),
-                    (7, "u_mouse", 8, "MOUSE_HOLD", "&mkp MB2"),
-                    (14, "slow_tap", 30, "SLOW", "&mo 8"),
-                    (30, "scroll_tap", 14, "SCROLL", "&slow_hold"))
-        for source, behavior, target, layer, expected in examples:
+        # Modifiers/layers still resolve early. Pointer targets are looked up
+        # after a 200ms hold, not as a consequence of the target's press.
+        examples = ((38, "layer_chord", 10, 11, "NUM", "&kp NUMBER_4"),
+                    (41, "layer_chord", 10, 42, "FUNCTION", "&kp DEL"),
+                    (39, "nav_hold", 10, 17, "NAV", "&kp LEFT_ARROW"),
+                    (13, "u_mouse", 200, 7, "MOUSE_HOLD", "&mkp MB1"),
+                    (6, "u_mouse", 200, 7, "MOUSE_HOLD", "&mkp MB1"),
+                    (7, "u_mouse", 200, 8, "MOUSE_HOLD", "&mkp MB2"),
+                    (14, "slow_tap", 200, 30, "SLOW", "&mo 8"),
+                    (30, "scroll_tap", 200, 14, "SCROLL", "&slow_hold"))
+        for source, behavior, elapsed, target, layer, expected in examples:
             with self.subTest(source=source, target=target):
                 self.assertTrue(km.resolve({"BASE"}, source).startswith("&"+behavior+" "))
-                self.assertEqual(decision(behavior, 10, other=target), "hold")
+                self.assertEqual(decision(behavior, elapsed, other=target), "hold")
                 self.assertEqual(km.resolve({"BASE", layer}, target), expected)
-        self.assertEqual(decision("u_mouse", 10, other=10), "tap")  # F->A types.
+        # Neither a formerly allowed F->I overlap nor F->A decides before 200ms.
+        for target in (7, 10):
+            self.assertEqual(decision("u_mouse", 10, other=target), "undecided")
+            self.assertEqual(decision("u_mouse", 100, other=target, released=True), "tap")
 
     def test_ime_ctrl_is_separate_from_lang_toggle_and_preserves_mouse(self):
         body = node("ime_ctrl")

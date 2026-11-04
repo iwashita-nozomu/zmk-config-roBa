@@ -42,9 +42,9 @@
 
 // All pointing layers share controls; manual holds outlive automatic MOUSE.
 // F/U/I/J+K share MOUSE_HOLD; G/right 21 share SLOW; M scrolls.
-// Pointer holds: 200ms alone OR a following U/I/O/F/G/right-SLOW/M press.
-// Other early overlaps resolve to typing; permitted letter pairs can still misfire.
-#define POINTER_CHORD_POSITIONS 6 7 8 13 14 21 30
+// Pointer holds require 200ms; overlapping letters must not trigger mouse entry.
+// No positional early-hold rule: all overlaps stay undecided until release/timeout.
+// Shift/Ctrl/NUM/Fn/NAV retain chords; active pointing controls stay immediate.
 // BASE I holds MOUSE_HOLD, but a new I press in a pointing layer is MB1.
 // The entry press is not a click; hand off to F/U before re-pressing I.
 // Existing combos keep priority. SYSTEM remains timer-only; IME hold is Ctrl.
@@ -169,10 +169,9 @@
         scroll_tap: scroll_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "hold-preferred";
+            flavor = "tap-preferred";
             tapping-term-ms = <200>;
             quick-tap-ms = <0>;
-            hold-trigger-key-positions = <POINTER_CHORD_POSITIONS>;
             bindings = <&mo>, <&kp>;
         };
 
@@ -203,10 +202,9 @@
         slow_tap: slow_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "hold-preferred";
+            flavor = "tap-preferred";
             tapping-term-ms = <200>;
             quick-tap-ms = <0>;
-            hold-trigger-key-positions = <POINTER_CHORD_POSITIONS>;
             bindings = <&slow_hold>, <&kp>;
         };
 
@@ -214,10 +212,9 @@
         u_mouse: u_mouse {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "hold-preferred";
+            flavor = "tap-preferred";
             tapping-term-ms = <200>;
             quick-tap-ms = <0>;
-            hold-trigger-key-positions = <POINTER_CHORD_POSITIONS>;
             bindings = <&mouse_hold>, <&kp>;
         };
 
