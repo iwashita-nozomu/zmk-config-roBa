@@ -14,14 +14,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def node(name):
-    return re.search(rf"(?s)\b{name}:\s*\w+\s*\{{(.*?)\}};", km.EXPANDED)[1]
+    pattern = (r"(?s)&mt\s*\{(.*?)\};" if name == "mt" else
+               rf"(?s)\b{name}:\s*\w+\s*\{{(.*?)\}};")
+    return re.search(pattern, km.EXPANDED)[1]
 
 
 def decision(name, elapsed, other=None, released=False):
     """Reference model of the configured tap/hold-preferred interrupt flavors.
 
     One deciding event only; this does not run ZMK capture, combos or its timer.
-    Pointer overlaps remain undecided; only release or timeout resolves them.
+    Shift/pointer overlaps stay undecided; only own release or timeout resolves them.
     """
     body = node(name)
     term = int(re.search(r"tapping-term-ms = <(\d+)>;", body)[1])
@@ -103,11 +105,11 @@ int main(void) {
 
 class ChordTests(unittest.TestCase):
     def test_chords_keep_single_hold_terms_and_system_time_only(self):
-        terms = {"z_hold": 250, "layer_chord": 200, "nav_hold": 200,
+        terms = {"z_hold": 250, "mt": 200, "layer_chord": 200, "nav_hold": 200,
                  "ime_ctrl": 200, "u_mouse": 200, "slow_tap": 200, "scroll_tap": 200}
         for name, term in terms.items():
             with self.subTest(name=name):
-                flavor = "tap-preferred" if name in ("u_mouse", "slow_tap", "scroll_tap") else "hold-preferred"
+                flavor = "tap-preferred" if name in ("z_hold", "mt", "u_mouse", "slow_tap", "scroll_tap") else "hold-preferred"
                 self.assertIn(f'flavor = "{flavor}";', node(name))
                 self.assertIn('quick-tap-ms = <0>;', node(name))
                 self.assertEqual(decision(name, term-1), "undecided")
@@ -116,7 +118,6 @@ class ChordTests(unittest.TestCase):
                 self.assertNotIn('hold-while-undecided', node(name))
         self.assertEqual(km.LAYERS["BASE"][40], "&lt 9 ESCAPE")
         self.assertNotRegex(km.SOURCE, r"&lt\s*\{")  # Retain ZMK's timer-only default.
-        self.assertRegex(km.SOURCE, r'(?s)&mt\s*\{\s*flavor = "hold-preferred";')
         self.assertIn('release-after-ms = <200>;', node("z_sticky"))
         self.assertIn('quick-release;', node("z_sticky"))
         self.assertIn('ignore-modifiers;', node("z_sticky"))
@@ -131,14 +132,29 @@ class ChordTests(unittest.TestCase):
                         self.assertEqual(decision(name, elapsed, other=p), "undecided")
                         self.assertEqual(decision(name, elapsed, other=p, released=True), "tap")
                     self.assertEqual(decision(name, 200, other=p), "hold")
-        for name in ("z_hold", "layer_chord", "nav_hold", "ime_ctrl"):
+        for name in ("layer_chord", "nav_hold", "ime_ctrl"):
             for p in range(43):
                 self.assertEqual(decision(name, 10, other=p), "hold")
         # Native combo priority/recognition is not simulated by this model.
         self.assertEqual(len(re.findall(r"(?m)^\s*key-positions\s*=", km.EXPANDED)), 7)
 
+    def test_shift_holds_wait_for_time_and_nav_shift_stays_immediate(self):
+        for name, term in (("z_hold", 250), ("mt", 200)):
+            self.assertNotIn('hold-trigger-key-positions', node(name))
+            for p in range(43):
+                with self.subTest(behavior=name, other=p):
+                    for elapsed in (10, term - 1):
+                        self.assertEqual(decision(name, elapsed, other=p), "undecided")
+                        self.assertEqual(decision(name, elapsed, other=p, released=True), "tap")
+                    self.assertEqual(decision(name, term, other=p), "hold")
+        self.assertEqual(km.LAYERS["BASE"][22], "&z_shift")
+        self.assertEqual(km.LAYERS["NUM"][22], "&mt LEFT_SHIFT NUMBER_0")
+        self.assertEqual(km.LAYERS["NAV"][22], "&kp LEFT_SHIFT")
+        self.assertEqual([key for keys in km.LAYERS.values() for key in keys
+                          if key.startswith("&mt ")], ["&mt LEFT_SHIFT NUMBER_0"])
+
     def test_requested_first_key_layer_lookups(self):
-        # Modifiers/layers still resolve early. Pointer targets are looked up
+        # Ctrl/layers still resolve early. Pointer targets are looked up
         # after a 200ms hold, not as a consequence of the target's press.
         examples = ((38, "layer_chord", 10, 11, "NUM", "&kp NUMBER_4"),
                     (41, "layer_chord", 10, 42, "FUNCTION", "&kp DEL"),

@@ -126,7 +126,9 @@ class KeymapTests(unittest.TestCase):
         self.assertEqual(LAYERS["BASE"][22], "&z_shift")
         self.assertEqual(LAYERS["NAV"][22], "&kp LEFT_SHIFT")
         self.assertEqual(LAYERS["NUM"][22], "&mt LEFT_SHIFT NUMBER_0")
-        self.assertIn('flavor = "hold-preferred";', SOURCE)
+        mt = re.search(r"(?s)&mt\s*\{(.*?)\};", EXPANDED)[1]
+        self.assertIn('flavor = "tap-preferred";', mt)
+        self.assertIn('tapping-term-ms = <200>;', mt)
         self.assertIn("quick-tap-ms = <0>;", SOURCE)
 
     def test_z_hold_and_one_shot_grace_use_standard_behaviors(self):
@@ -140,7 +142,7 @@ class KeymapTests(unittest.TestCase):
         self.assertEqual(re.findall(r"&([a-z_]+)", sticky), ["kp"])
         self.assertIn('compatible = "zmk,behavior-hold-tap";', hold)
         self.assertIn('tapping-term-ms = <250>;', hold)
-        self.assertIn('flavor = "hold-preferred";', hold)
+        self.assertIn('flavor = "tap-preferred";', hold)
         self.assertIn('quick-tap-ms = <0>;', hold)
         self.assertEqual(re.findall(r"&([a-z_]+)", hold), ["shift_hold", "z_tap"])
         self.assertNotIn('ime_shift', SOURCE)

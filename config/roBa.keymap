@@ -44,7 +44,7 @@
 // F/U/I/J+K share MOUSE_HOLD; G/right 21 share SLOW; M scrolls.
 // Pointer holds require 200ms; overlapping letters must not trigger mouse entry.
 // No positional early-hold rule: all overlaps stay undecided until release/timeout.
-// Shift/Ctrl/NUM/Fn/NAV retain chords; active pointing controls stay immediate.
+// Ctrl/NUM/Fn/NAV retain chords; Shift and pointer entries wait for their hold time.
 // BASE I holds MOUSE_HOLD, but a new I press in a pointing layer is MB1.
 // The entry press is not a click; hand off to F/U before re-pressing I.
 // Existing combos keep priority. SYSTEM remains timer-only; IME hold is Ctrl.
@@ -55,8 +55,10 @@
     &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo L_SCROLL  &trans  &trans  &trans \
     &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
 
+// NUM 0/Shift waits for 200ms; rolling digits must not enable Shift.
 &mt {
-    flavor = "hold-preferred";
+    flavor = "tap-preferred";
+    tapping-term-ms = <200>;
     quick-tap-ms = <0>;
 };
 
@@ -218,7 +220,7 @@
             bindings = <&mouse_hold>, <&kp>;
         };
 
-        // Synchronous Shift before the interrupting key; refresh the stale release timestamp.
+        // Forward Shift synchronously and preserve the release-based sticky grace.
         shift_hold: shift_hold {
             compatible = "zmk,behavior-shift-hold";
             #binding-cells = <0>;
@@ -235,10 +237,11 @@
             ignore-modifiers;
         };
 
+        // Z waits for 250ms even when another key is pressed or released.
         z_hold: z_hold {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "hold-preferred";
+            flavor = "tap-preferred";
             tapping-term-ms = <250>;
             quick-tap-ms = <0>;
             bindings = <&shift_hold>, <&z_tap>;
