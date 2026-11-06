@@ -1,0 +1,9 @@
+description: Share a pointing layer between paired holds, independently per instance
+compatible: "zmk,behavior-mouse-hold"
+include: zero_param.yaml
+
+properties:
+  layer:
+    type: int
+    required: true
+    description: MOUSE_HOLD or SLOW layer index, independent of the automatic layer
